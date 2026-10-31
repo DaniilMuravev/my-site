@@ -168,8 +168,11 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
 .tile.roast{background:var(--tile-rust);color:#fff;min-height:300px}
 .sp2{height:84px}
 .tile.roast .cta{background:#fff;color:#0B0B0C}
-.tile.case{background:var(--bg2);color:var(--ink);min-height:300px;border:1px solid var(--line)}
-.tile.case p{color:var(--muted);opacity:1}
+.tile.case{background:#EFEEE8;color:#0B0B0C;min-height:300px;border:none;background-image:repeating-linear-gradient(135deg,rgba(0,0,0,.035) 0 2px,transparent 2px 14px)}
+.tile.case .cta{background:#0B0B0C;color:#fff}
+.tile.case .tag{color:#6b6b66}
+.tile.case h2{font-size:clamp(30px,3.4vw,44px);letter-spacing:-.01em}
+.tile.case p{color:#45453f;opacity:1}
 .tile .tag{color:var(--muted);font-size:14px}
 .meter{position:absolute;right:24px;top:22px;text-align:right;font-family:var(--display);line-height:1}
 .meter span{font-size:44px;display:block}
@@ -238,6 +241,25 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
 .chatbtns button{font:inherit;font-size:14px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:transparent;color:var(--muted);cursor:pointer}
 .hint{color:var(--muted);font-size:14px;margin:0 0 14px}
 #chatSearch{font:inherit;width:100%;padding:11px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg2);color:var(--ink)}
+
+.bars i{position:relative;overflow:hidden}
+.bars i b{position:absolute;inset:0;width:0;background:#fff;display:block}
+.bars i.cur b{animation:fillbar var(--dur,6s) linear forwards}
+.bars i.done b{width:100%}
+.stage.paused .bars i.cur b{animation-play-state:paused}
+@keyframes fillbar{to{width:100%}}
+.fx{position:fixed;inset:0;pointer-events:none;z-index:30}
+.animal{font-size:120px;line-height:1;margin:6px 0 10px;display:inline-block}
+@media (prefers-reduced-motion:no-preference){ .animal{animation:pop .7s cubic-bezier(.2,1.6,.4,1) both} @keyframes pop{from{transform:scale(.2) rotate(-20deg);opacity:0}} }
+.heat{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,auto);grid-auto-columns:1fr;gap:2px;margin:14px 0 8px;width:100%}
+.heat i{display:block;aspect-ratio:1/1;border-radius:2px;background:rgba(255,255,255,.08)}
+.duel{margin-top:12px;display:grid;gap:12px}
+.duel h3{font-size:15px;font-weight:500;margin:0 0 6px;opacity:.85}
+.qopt.right{animation:yes .5s ease} @keyframes yes{50%{transform:scale(1.05)}}
+.qopt.wrong{animation:no .4s ease} @keyframes no{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.score{margin-top:10px;font-size:18px}
+
+.scene{transform-origin:50% 50%;will-change:transform,opacity}
 </style>
 </head>
 <body>
@@ -264,7 +286,7 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
       <p><b>Продакт-менеджер в B2B SaaS и AI.</b> Ниже маленькие приложения, которые я придумал и собрал сам</p>
     </div>
 
-    <section class="works" id="apps" aria-label="Работы">
+    <section class="works scene" id="apps" aria-label="Работы">
       <a class="tile big" href="#wrapped">
         <div class="mini" aria-hidden="true">
           <div class="mb"><i></i><i></i><i></i><i></i></div>
@@ -288,16 +310,16 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
         </div>
       </a>
       <a class="tile case" id="caseTile" href="#" target="_blank" rel="noopener">
-        <div class="tag">Кейс · концепт</div>
+        <div class="tag">Кейс: редизайн сайта бренда</div>
         <div>
           <h2>nobody.solutions</h2>
           <p>Инстаграм и Telegram бренда выглядят свежо, а сайт выбивается. Предложил новый: вешалка с вещами и примерка на манекене, сначала под телефон. Магазин пока не обновлен, это мой прототип</p>
-          <span class="cta">Смотреть прототип</span>
+          <span class="cta">Открыть прототип ↗</span>
         </div>
       </a>
     </section>
 
-    <section class="about" id="about">
+    <section class="about scene" id="about">
       <h2>Обо мне</h2>
       <div class="txt">
         <p>3,5 года в продуктовом и проектном менеджменте, до этого дизайн и фронтенд. Поэтому прототип проверяю сам, до того как подключится разработка</p>
@@ -319,7 +341,7 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
       </div>
     </section>
 
-    <section class="contact" id="contact">
+    <section class="contact scene" id="contact">
       <h2>Написать</h2>
       <a class="big" href="https://t.me/damnwhylit" target="_blank" rel="noopener">@damnwhylit</a>
       <span class="small">или на <a href="mailto:mur.daniil@gmail.com">mur.daniil@gmail.com</a>. Вне работы сноуборд, скейт, музыка и рисую</span>
@@ -455,7 +477,7 @@ function analyze(chat, year){
   const hours = new Array(24).fill(0), weekdays=new Array(7).fill(0), months=new Array(12).fill(0);
   const people = new Map();
   const P = name => { if(!people.has(name)) people.set(name,{name,msgs:0,voice:0,stickers:0,photos:0,night:0,starts:0,replies:[],run:0,chars:0}); return people.get(name); };
-  const words=new Map(), emoji=new Map(), days=new Set();
+  const words=new Map(), emoji=new Map(), days=new Set(); const dc={}; let totalChars=0;
   let prev=null, runName=null, runLen=0;
   let posts=[], forwards=0;
   for (const m of all){
@@ -463,7 +485,7 @@ function analyze(chat, year){
     const local = m.date; // export date is in user local time: "YYYY-MM-DDTHH:MM:SS"
     const h = +local.slice(11,13), mo=+local.slice(5,7)-1;
     const wd = new Date(local.slice(0,10)+"T12:00:00").getDay();
-    hours[h]++; months[mo]++; weekdays[wd]++; days.add(dayKey(local));
+    hours[h]++; months[mo]++; weekdays[wd]++; days.add(dayKey(local)); dc[dayKey(local)]=(dc[dayKey(local)]||0)+1;
     const name = m.from || m.actor || chat.name || "Без имени";
     const p = P(name); p.msgs++;
     if (h<5) p.night++;
@@ -474,6 +496,9 @@ function analyze(chat, year){
     const txt = msgText(m);
     p.chars += txt.length;
     if (/\)\s*$/.test(txt)) p.brk=(p.brk||0)+1;
+    totalChars+=txt.length;
+    if (/(ах|ха){2,}|хех|ору|ржу|lol|😂|🤣/i.test(txt)) p.laugh=(p.laugh||0)+1;
+    if (/\?/.test(txt)) p.q=(p.q||0)+1;
     if (txt){
       for (const e of txt.match(EMOJI_RE)||[]) emoji.set(e,(emoji.get(e)||0)+1);
       const clean = txt.replace(/https?:\/\/\S+/g," ").toLowerCase().replace(/ё/g,"е");
@@ -514,7 +539,7 @@ function analyze(chat, year){
     name: chat.name || "Избранное", type: chat.type||"", channel: isChannel(chat), year,
     total, activeDays: days.size, hours, months, weekdays, peakHour, peakMonth, peakWeekday,
     people: ppl, topWords: topN(words,40), topEmoji: topN(emoji,6), streak: best, silence, silenceFrom, nightShare,
-    awards: [], forwards
+    awards: [], forwards, dayCounts:dc, totalChars
   };
   if (res.channel){
     const n=posts.length||1;
@@ -718,19 +743,64 @@ const EMO_MOOD=[[/😂|🤣|😆|😹/u,"Главная эмоция года: �
 function emojiMood(list){ for(const [e] of list){ for(const [re,t] of EMO_MOOD){ if(re.test(e)) return t; } } return "Эмодзи у вас свои, особенные. Как и вы"; }
 function timeBin(h){ return h<6?3: h<12?0: h<18?1: 2; }
 /* slides */
+function chatAnimal(r, v, med){
+  const night=r.nightShare, vs=v.voice, st=v.stick, laugh=v.laugh;
+  if (night>0.2) return ["🦉","Совы","Самое живое у вас начинается, когда нормальные люди спят"];
+  if (med!=null && med<180) return ["🐆","Гепарды","Отвечаете быстрее, чем собеседник успевает заблокировать экран"];
+  if (vs>0.1) return ["🦜","Попугаи","Голосовые вместо текста. Слушать вас можно как подкаст"];
+  if (st>0.08) return ["🐹","Хомяки","Тащите в чат стикеры, как хомяк семечки"];
+  if (laugh>0.15) return ["🐬","Дельфины","Вечно хихикаете. Ржач тут фоновая музыка"];
+  if (med!=null && med>3600) return ["🦥","Ленивцы","Ответ приходит, когда приходит. Тихо, спокойно, без суеты"];
+  if (v.avgLen>90) return ["🐘","Слоны","Пишете простынями и помните все, что было"];
+  if (r.peakHour<9) return ["🐓","Петухи","Чат просыпается раньше будильника"];
+  if (r.streak>30) return ["🐺","Волки","Стая на связи каждый день, без пропусков"];
+  return ["🦁","Львы","Уверенный чат без лишней суеты. Это база"];
+}
+function heatHtml(r){
+  const keys=Object.keys(r.dayCounts||{}).sort(); if(!keys.length) return "";
+  const end=new Date(keys.at(-1)+"T12:00:00"); const start=new Date(end); start.setDate(end.getDate()-364);
+  start.setDate(start.getDate()-start.getDay());
+  const vals=Object.values(r.dayCounts), mx=Math.max(...vals)||1; let cells="";
+  for(let d=new Date(start); d<=end; d.setDate(d.getDate()+1)){ const k=d.toISOString().slice(0,10), v=r.dayCounts[k]||0;
+    cells+=`<i style="${v?`background:rgba(168,220,197,${(0.25+0.75*Math.sqrt(v/mx)).toFixed(2)})`:""}"></i>`; }
+  return `<div class="heat" aria-hidden="true">${cells}</div>`;
+}
+function hottestDay(r){ let best=null,n=0; for(const [k,v] of Object.entries(r.dayCounts||{})) if(v>n){n=v;best=k;} if(!best) return null; const d=new Date(best+"T12:00:00"); return {date:d.toLocaleDateString("ru-RU",{day:"numeric",month:"long"}), n}; }
+function duelHtml(people){
+  const top=people.slice(0,Math.min(4,people.length)); if(top.length<2) return "";
+  const block=(title,f,fmt)=>{ const mx=Math.max(...top.map(f)); if(!mx) return ""; return `<div><h3>${title}</h3><div class="rows">${top.map(p=>`<div class="row"><span>${esc(p.name)}</span><b>${fmt(f(p))}</b><div class="bar"><s style="width:${Math.max(4,f(p)/mx*100)}%"></s></div></div>`).join("")}</div></div>`; };
+  return `<div class="duel">${block("Кто чаще ржет",p=>p.laugh||0,num)}${block("Кто больше спрашивает",p=>p.q||0,num)}${block("Кто пишет простынями",p=>p.msgs?Math.round(p.chars/p.msgs):0,v=>v+" симв.")}</div>`;
+}
+function bookLine(chars){ const pages=Math.round(chars/1800), mm=pages/480, hours=chars/180/60, eps=Math.round(hours*60/22);
+  return {pages, line:`${num(pages)} страниц. Это ${mm>=1? mm.toFixed(1).replace(".",",")+" раза «Мастер и Маргарита»" : Math.round(mm*100)+"% «Мастера и Маргариты»"}. Печатали вы примерно ${num(Math.round(hours))} ч, это ${num(eps)} серий «Друзей»`}; }
+function countUp(root){ root.querySelectorAll("[data-count]").forEach(el=>{ const to=+el.dataset.count; if(matchMedia("(prefers-reduced-motion: reduce)").matches){ el.textContent=num(to); return; } const t0=performance.now(), d=900;
+  const step=t=>{ const k=Math.min(1,(t-t0)/d), e=1-Math.pow(1-k,3); el.textContent=num(Math.round(to*e)); if(k<1) requestAnimationFrame(step); }; requestAnimationFrame(step); }); }
+function burst(x,y,opts={}){ if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const cv=document.createElement("canvas"); cv.className="fx"; cv.width=innerWidth*devicePixelRatio; cv.height=innerHeight*devicePixelRatio; document.body.appendChild(cv);
+  const c=cv.getContext("2d"), dpr=devicePixelRatio, cols=opts.colors||["#ffffff","#A8DCC5","#7FBFA4","#E07A57","#F2D06B"], N=opts.n||90, P=[];
+  for(let i=0;i<N;i++){ const a=Math.random()*Math.PI*2, sp=(opts.speed||9)*(0.4+Math.random()); P.push({x:x*dpr,y:y*dpr,vx:Math.cos(a)*sp*dpr,vy:Math.sin(a)*sp*dpr-(opts.up||3)*dpr,s:(opts.square?5+Math.random()*6:3+Math.random()*5)*dpr,c:cols[i%cols.length],r:Math.random()*6,life:1}); }
+  const t0=performance.now();
+  const tick=t=>{ const dt=(t-t0)/1000; c.clearRect(0,0,cv.width,cv.height); let alive=false;
+    for(const p of P){ p.vy+=0.35*dpr; p.vx*=0.985; p.x+=p.vx; p.y+=p.vy; p.life-=0.012; if(p.life>0){ alive=true; c.globalAlpha=Math.max(0,p.life); c.fillStyle=p.c; c.save(); c.translate(p.x,p.y); c.rotate(p.r+dt*4); c.fillRect(-p.s/2,-p.s/2,p.s,opts.square?p.s:p.s*.6); c.restore(); } }
+    if(alive&&dt<2.6) requestAnimationFrame(tick); else cv.remove(); };
+  requestAnimationFrame(tick); }
+
 function ageWord(a){ const m=a%10, h=a%100; return (m===1&&h!==11)?"год":(m>=2&&m<=4&&(h<12||h>14))?"года":"лет"; }
 function buildOverviewSlides(r){
   const yl=r.year||"все время", S=[], max=r.chats[0]?.total||1, hp=hourPersona(r.peakHour);
-  S.push({c:"t1",h:`<p class="k">${r.custom?"Твои люди":"Твой Telegram"}, ${yl}</p><div class="big">${num(r.total)}</div><h2>сообщений в ${num(r.chatsCount)} чатах</h2><p>Из них ${num(r.mineTotal)} написал ты сам. ${perDayLine(r.mineTotal/365)}</p>`});
+  S.push({c:"t1",confetti:true,h:`<p class="k">${r.custom?"Твои люди":"Твой Telegram"}, ${yl}</p><div class="big" data-count="${r.total}">0</div><h2>сообщений в ${num(r.chatsCount)} чатах</h2><p>Из них ${num(r.mineTotal)} написал ты сам. ${perDayLine(r.mineTotal/365)}</p>`});
   if (r.chats.length>=2){ const opts=shuffle(r.chats.slice(0,3).map(c=>c.name)); S.push({c:"t2",quiz:{opts, ans:r.chats[0].name, rev:`${r.chats[0].name}: ${num(r.chats[0].total)} сообщений. Тут ты живешь`},h:`<p class="k">Угадай</p><h2>В каком чате ты провел больше всего времени?</h2>`}); }
   S.push({c:"t2",h:`<p class="k">Где ты живешь</p><h2>Топ-5 чатов</h2><div class="rows">${r.chats.map(c=>`<div class="row"><span>${esc(c.name)}</span><b>${num(c.total)}</b><div class="bar"><s style="width:${Math.max(4,c.total/max*100)}%"></s></div></div>`).join("")}</div>`});
+  { const an=chatAnimal(r, r.vibe, null); r.animal=an; S.splice(1,0,{c:"t4",confetti:true,h:`<p class="k">Твой тотем в Telegram</p><div class="animal">${an[0]}</div><h2>Ты из ${an[1].toLowerCase()}</h2><p>${esc(an[2])}</p>`}); }
   if (r.topPerson) S.push({c:"t4",h:`<p class="k">Главный собеседник года</p><h2>${esc(r.topPerson.name)}</h2><div class="big">${num(r.topPerson.total)}</div><p>сообщений на двоих, из них ${num(r.topPerson.mine)} твои. ${r.topPerson.mine/r.topPerson.total>0.6?"Кажется, ты тут главный болтун":r.topPerson.mine/r.topPerson.total<0.4?"Ты больше слушаешь. Или читаешь и молчишь":"Честный обмен, по-взрослому"}</p>`});
+  { const hd=hottestDay(r); S.push({c:"t3",h:`<p class="k">Твой год по дням</p><h2>${r.streak} дн. подряд в сети</h2>${heatHtml(r)}<p>${hd?`Самый болтливый день: ${hd.date}, ${num(hd.n)} твоих сообщений`:""}</p>`}); }
+  { const bk=bookLine(r.totalChars||0); if(bk.pages>0) S.push({c:"t1",h:`<p class="k">Если бы твои сообщения были книгой</p><div class="big" data-count="${bk.pages}">0</div><h2>страниц</h2><p>${esc(bk.line)}</p>`}); }
   S.push({c:"t3",h:`<p class="k">Твое время</p><h2>${hp[0]}</h2><p>${esc(hp[1])}</p>${hoursHtml(r)}<p>${Math.round(r.nightShare*100)}% твоих сообщений ночью, самый активный месяц ${MONTHS[r.peakMonth]}</p>`});
   if (r.topWords.length) S.push({c:"t7",cloud:true,h:`<p class="k">Только твои сообщения</p><h2>Твое слово года: «${esc(r.topWords[0][0])}»</h2><div class="cloud sq" data-cloud></div><button class="cloudctl" data-reshuffle>Другая раскладка ↻</button>`});
   if (r.topEmoji.length) S.push({c:"t1",emoji:true,h:`<p class="k">Твои эмодзи</p><h2>${esc(emojiMood(r.topEmoji))}</h2><div class="emojis" data-emojis></div><p style="font-size:15px;opacity:.85">Жми на эмодзи, покажу сколько раз</p>`});
   const ag=chatAge(r.vibe); r.age=ag.age;
   S.push({c:"t4",h:`<p class="k">Твой возраст в переписке</p><div class="agebig">${ag.age}</div><h2>${ageWord(ag.age)}</h2><p>${esc(ageLine(ag.age))}</p>${ag.why.length?`<ul class="why">${ag.why.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>`:""}`});
-  S.push({c:"t5",end:true,h:`<p class="k">Готово</p><h2>Сохрани карточку и кинь в чат</h2><p>Пусть остальные тоже посмотрят свои итоги</p><div class="endbtns"><button class="btn" id="share">Поделиться карточкой</button><button class="btn ghost" id="dl">Сохранить картинку</button><button class="btn ghost" id="again">Другой чат</button></div>`});
+  S.push({c:"t5",end:true,h:`<p class="k">Готово</p><h2>Сохрани карточку и кинь в чат</h2><p data-score>Пусть остальные тоже посмотрят свои итоги</p><div class="endbtns"><button class="btn" id="share">Поделиться карточкой</button><button class="btn ghost" id="dl">Сохранить картинку</button><button class="btn ghost" id="again">Другой чат</button></div>`});
   return S;
 }
 function fitBigs(root){ root.querySelectorAll(".big,.aura,.agebig").forEach(el=>{ el.style.fontSize=""; let fs=parseFloat(getComputedStyle(el).fontSize); let guard=0; while(el.scrollWidth>el.clientWidth+1 && fs>24 && guard++<40){ fs-=4; el.style.fontSize=fs+"px"; } }); }
@@ -747,42 +817,50 @@ function buildSlides(r){
     S.push({c:"t7",h:`<p class="k">Что поправить</p><h2>3 совета</h2>${r.roast.tips.map(l=>`<div class="award"><span>${esc(l)}</span></div>`).join("")}`});
   } else {
     r.awards = makeAwards(r.people);
-    const perDay = r.total/Math.max(1,r.activeDays);
-    S.push({c:"t1",h:`<p class="k">«${esc(r.name)}», ${yl}</p><div class="big">${num(r.total)}</div><h2>сообщений</h2><p>${num(r.activeDays)} дней на связи, в среднем ${num(Math.round(perDay))} в день. ${perDayLine(perDay)}</p>`});
-    const top=r.people.slice(0,5), max=top[0]?.msgs||1;
+    const perDay = r.total/Math.max(1,r.activeDays), v=r.vibe||vibeStats([],null);
+    const fastL=r.people.filter(p=>p.replies.length>=10).map(p=>p.medianReply), med=fastL.length? Math.min(...fastL):null;
+    S.push({c:"t1",confetti:true,h:`<p class="k">«${esc(r.name)}», ${yl}</p><div class="big" data-count="${r.total}">0</div><h2>сообщений</h2><p>${num(r.activeDays)} дней на связи, в среднем ${num(Math.round(perDay))} в день. ${perDayLine(perDay)}</p>`});
+    const an=chatAnimal(r,v,med); r.animal=an;
+    S.push({c:"t4",confetti:true,h:`<p class="k">Тотем вашего чата</p><div class="animal">${an[0]}</div><h2>Вы ${an[1]}</h2><p>${esc(an[2])}</p>`});
     if (r.people.length>=2){
       const cand=r.people.slice(0,3), first=cand.slice().sort((a,b)=>b.starts-a.starts)[0];
       S.push({c:"t2",quiz:{opts:shuffle(cand.map(p=>p.name)), ans:first.name, rev:`${first.name} начинал разговор ${first.starts} раз. ${cz("Без него было бы тихо","Без него тут была бы тишина, ебать")}`},h:`<p class="k">Угадай</p><h2>Кто чаще пишет первым?</h2>`});
     }
-    const share=top[0]? top[0].msgs/r.total : 0;
+    const top=r.people.slice(0,5), max=top[0]?.msgs||1, share=top[0]? top[0].msgs/r.total : 0;
     S.push({c:"t2",h:`<p class="k">Кто больше пишет</p><h2>${esc(top[0]?.name||"")} впереди</h2><div class="rows">${top.map(p=>`<div class="row"><span>${esc(p.name)}</span><b>${num(p.msgs)}</b><div class="bar"><s style="width:${Math.max(4,p.msgs/max*100)}%"></s></div></div>`).join("")}</div><p style="margin-top:14px">${r.people.length===2? (share>0.6? `${esc(top[0].name)} тащит переписку: ${Math.round(share*100)}% сообщений` : "Почти поровну. Редкий баланс, как на качелях") : `${esc(top[0]?.name||"")} пишет ${Math.round(share*100)}% всех сообщений`}</p>`});
-    const bins=["Утро","День","Вечер","Ночь"], bi=timeBin(r.peakHour), hp=hourPersona(r.peakHour);
-    S.push({c:"t3",quiz:{opts:bins, ans:bins[bi], rev:`Пик в ${r.peakHour}:00. ${hp[0]}`},h:`<p class="k">Угадай</p><h2>Когда вы самые живые?</h2>`});
-    S.push({c:"t3",h:`<p class="k">Время</p><h2>${hp[0]}</h2><p>${esc(hp[1])}</p>${hoursHtml(r)}<p>${Math.round(r.nightShare*100)}% сообщений ночью, любимый день ${WD[r.peakWeekday]}</p>`});
-    const fast=r.people.filter(p=>p.replies.length>=10).map(p=>p.medianReply), med=fast.length? Math.min(...fast):null;
-    S.push({c:"t4",h:`<p class="k">Ритм</p><div class="big">${r.streak}</div><h2>дней подряд без перерыва</h2><p>Самый активный месяц ${MONTHS[r.peakMonth]}.${r.silence>2?` Самый долгий перерыв ${r.silence} дн., видимо, жили своей жизнью. Уважаем.`:""}${med!=null?` Ответ прилетает за ${fmtDur(med)}. ${speedLine(med)}`:""}</p>`});
+    if (r.people.length>=2) S.push({c:"t7",h:`<p class="k">Дуэли</p><h2>Кто есть кто</h2>${duelHtml(r.people)}`});
+    const hd=hottestDay(r);
+    S.push({c:"t3",h:`<p class="k">Ваш год по дням</p><h2>${r.streak} ${r.streak%10===1&&r.streak%100!==11?"день":"дней"} подряд без перерыва</h2>${heatHtml(r)}<p>${hd?`Самый жаркий день: ${hd.date}, ${num(hd.n)} сообщений. Что тогда случилось?`:""}</p>`});
+    const hp=hourPersona(r.peakHour);
+    S.push({c:"t3",h:`<p class="k">Время</p><h2>${hp[0]}</h2><p>${esc(hp[1])}</p>${hoursHtml(r)}<p>${med!=null?`Ответ прилетает за ${fmtDur(med)}. ${speedLine(med)}`:`Любимый день: ${WD[r.peakWeekday]}`}</p>`});
+    const bk=bookLine(r.totalChars||0);
+    if (bk.pages>0) S.push({c:"t1",h:`<p class="k">Если бы ваш чат был книгой</p><div class="big" data-count="${bk.pages}">0</div><h2>страниц</h2><p>${esc(bk.line)}</p>`});
     if (r.topWords.length) S.push({c:"t7",cloud:true,h:`<p class="k">Ваши словечки</p><h2>Слово года: «${esc(r.topWords[0][0])}»</h2><div class="cloud sq" data-cloud></div><button class="cloudctl" data-reshuffle>Другая раскладка ↻</button>`});
-    if (r.topEmoji.length) S.push({c:"t1",emoji:true,h:`<p class="k">Эмодзи года</p><h2>${esc(emojiMood(r.topEmoji))}</h2><div class="emojis" data-emojis></div><p style="font-size:15px;opacity:.85">Жми на эмодзи, покажу сколько раз</p>`});
-    const ag=chatAge(r.vibe||vibeStats([],null));
-    S.push({c:"t4",h:`<p class="k">Возраст чата</p><div class="agebig">${ag.age}</div><h2>${ageWord(ag.age)}</h2><p>${esc(ageLine(ag.age))}</p>${ag.why.length?`<ul class="why">${ag.why.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>`:""}`});
-    r.age=ag.age;
+    if (r.topEmoji.length) S.push({c:"t1",emoji:true,h:`<p class="k">Эмодзи года</p><h2>${esc(emojiMood(r.topEmoji))}</h2><div class="emojis" data-emojis></div><p style="font-size:15px;opacity:.85">Жми на эмодзи</p>`});
+    const ag=chatAge(v); r.age=ag.age;
+    S.push({c:"t4",confetti:true,h:`<p class="k">Возраст чата</p><div class="agebig">${ag.age}</div><h2>${ageWord(ag.age)}</h2><p>${esc(ageLine(ag.age))}</p>${ag.why.length?`<ul class="why">${ag.why.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>`:""}`});
     if (r.awards.length) S.push({c:"t6",h:`<p class="k">Номинации</p><h2>И награды получают</h2>${r.awards.slice(0,6).map(a=>`<div class="award"><b>${esc(a.t)}: ${esc(a.who)}</b><span>${esc(a.d)}</span></div>`).join("")}`});
   }
-  S.push({c:"t5",end:true,h:`<p class="k">Готово</p><h2>Сохрани карточку и кинь в чат</h2><p>Пусть остальные тоже посмотрят свои итоги</p><div class="endbtns"><button class="btn" id="share">Поделиться карточкой</button><button class="btn ghost" id="dl">Сохранить картинку</button><button class="btn ghost" id="aiNom" hidden>AI-номинации ✨</button><button class="btn ghost" id="again">Другой чат</button></div>`});
+  S.push({c:"t5",end:true,h:`<p class="k">Готово</p><h2>Сохрани карточку и кинь в чат</h2><p data-score>Пусть остальные тоже посмотрят свои итоги</p><div class="endbtns"><button class="btn" id="share">Поделиться карточкой</button><button class="btn ghost" id="dl">Сохранить картинку</button><button class="btn ghost" id="aiNom" hidden>AI-номинации ✨</button><button class="btn ghost" id="again">Другой чат</button></div>`});
   return S;
 }
 function hoursHtml(r){ const m=Math.max(...r.hours)||1; return `<div class="hours" aria-hidden="true">${r.hours.map((v,i)=>`<i class="${i===r.peakHour?"peak":""}" style="height:${v/m*100}%"></i>`).join("")}</div><p style="font-size:14px;opacity:.8">0:00 ··· 23:00</p>`; }
 
-let SL=[], idx=0;
+let SL=[], idx=0, AUTO=null;
 function openStory(s){ SL=s; idx=0; $("#stage").classList.add("on"); document.body.style.overflow="hidden"; render(); $("#next").focus(); }
-function closeStory(){ $("#stage").classList.remove("on"); document.body.style.overflow=""; }
+function closeStory(){ clearTimeout(AUTO); $("#stage").classList.remove("on"); document.body.style.overflow=""; }
 function render(){
   const s=SL[idx];
-  $("#bars").innerHTML=SL.map((_,i)=>`<i class="${i<=idx?"done":""}"></i>`).join("");
+  clearTimeout(AUTO);
+  const dur = s.end? 0 : (s.quiz && !s.quiz.picked)? 0 : s.cloud||s.emoji? 9000 : 6000;
+  $("#bars").innerHTML=SL.map((_,i)=>`<i class="${i<idx?"done":i===idx&&dur?"cur":i===idx?"done":""}" style="--dur:${dur}ms"><b></b></i>`).join("");
+  if (dur) AUTO=setTimeout(()=>{ if(!$("#stage").classList.contains("paused")) $("#next").click(); }, dur);
   $("#story").className="story "+s.c;
   $("#slideHost").innerHTML=`<div class="slide">${s.h}</div>`;
   const tapsOn=!s.end; $("#next").style.display=tapsOn?"":"none";
-  fitBigs($("#slideHost"));
+  fitBigs($("#slideHost")); countUp($("#slideHost"));
+  if (s.confetti && !s.fired){ s.fired=true; const rc=$("#story").getBoundingClientRect(); setTimeout(()=>burst(rc.left+rc.width/2, rc.top+rc.height*0.4),350); }
+  if (s.end){ const qs=SL.filter(x=>x.quiz&&x.quiz.picked), ok=qs.filter(x=>x.quiz.picked===x.quiz.ans).length; const el=document.querySelector("#slideHost [data-score]"); if(el&&qs.length) el.textContent=`Ты угадал ${ok} из ${qs.length}. ${ok===qs.length?"Знаешь свой чат как облупленный":"Есть куда расти. Пусть друзья попробуют"}`; }
   if (s.cloud){ const el=document.querySelector("#slideHost [data-cloud]"); s.mode=s.mode||0; const draw=()=>drawCloud(el, RESULT.topWords, {color:"#fff", accent:"#A8DCC5", mode:["mix","flat","cross"][s.mode%3], seed:s.mode});
     if(el){ draw(); const b=document.querySelector("#slideHost [data-reshuffle]"); if(b) b.onclick=(e)=>{ e.stopPropagation(); s.mode++; draw(); }; } }
   if (s.emoji){ const box=document.querySelector("#slideHost [data-emojis]"); const list=RESULT.topEmoji.slice(0,8), mx=list[0]?.[1]||1;
@@ -793,7 +871,9 @@ function render(){
     document.querySelector("#slideHost .slide").appendChild(wrap);
     const show=()=>{ wrap.querySelectorAll(".qopt").forEach(b=>{ if(b.textContent===q.ans) b.classList.add("right"); else if(b.textContent===q.picked) b.classList.add("wrong"); }); wrap.querySelector(".qreveal").textContent=(q.picked===q.ans?"Угадал! ":"Мимо. ")+q.rev; };
     if (q.picked) show();
-    wrap.querySelectorAll(".qopt").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); if(q.picked) return; q.picked=b.textContent; track("quiz_answered",{right:q.picked===q.ans}); show(); }); }
+    wrap.querySelectorAll(".qopt").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); if(q.picked) return; q.picked=b.textContent; track("quiz_answered",{right:q.picked===q.ans}); show();
+      if(q.picked===q.ans){ const rc=b.getBoundingClientRect(); burst(rc.left+rc.width/2, rc.top+rc.height/2,{n:120}); } else if(navigator.vibrate) navigator.vibrate(80);
+      clearTimeout(AUTO); AUTO=setTimeout(()=>$("#next").click(), 2600); }); }
   if (s.end){
     $("#dl").onclick=async()=>{ const b=await wrappedBlob(); saveBlob(b,"wrapped-"+(RESULT.year||"all")+".png"); };
     $("#share").onclick=async()=>{ const b=await wrappedBlob(); shareBlob(b,"wrapped.png", wrappedShareText()); };
@@ -804,6 +884,8 @@ function render(){
 $("#next").onclick=()=>{ if(idx<SL.length-1){idx++;render();} };
 $("#prev").onclick=()=>{ if(idx>0){idx--;render();} };
 $("#close").onclick=closeStory;
+(()=>{ const st=$("#story"); let t; const hold=()=>{ t=setTimeout(()=>$("#stage").classList.add("paused"),180); }; const free=()=>{ clearTimeout(t); setTimeout(()=>$("#stage").classList.remove("paused"),50); };
+  st.addEventListener("pointerdown",hold); st.addEventListener("pointerup",free); st.addEventListener("pointercancel",free); st.addEventListener("pointerleave",free); })();
 addEventListener("keydown",e=>{ if(!$("#stage").classList.contains("on")) return;
   if(e.key==="ArrowRight"){ $("#next").click(); } if(e.key==="ArrowLeft"){ $("#prev").click(); } if(e.key==="Escape") closeStory(); });
 
@@ -820,7 +902,7 @@ async function wrappedBlob(){
   let y=680; x.font=F(500,44);
   const lines = r.channel
     ? [num(r.avgViews)+" просмотров в среднем", perWeekText(r.perWeek), ...(r.roast.lines.slice(0,2))]
-    : [...(r.age?[`Возраст чата: ${r.age} ${ageWord(r.age)}`]:[]), ...r.awards.slice(0,3).map(a=>a.t+": "+a.who)];
+    : [...(r.animal?[`Тотем: ${r.animal[0]} ${r.animal[1]}`]:[]), ...(r.age?[`Возраст чата: ${r.age} ${ageWord(r.age)}`]:[]), ...r.awards.slice(0,2).map(a=>a.t+": "+a.who)];
   for (const l of lines){ x.fillText(clip(l,36),80,y); y+=78; }
   x.globalAlpha=.75; x.font=F(500,34); x.fillText("Рекап: итоги года по твоему чату",80,H-90); x.globalAlpha=1;
   return await new Promise(res=>c.toBlob(res,"image/png"));
@@ -829,9 +911,9 @@ function clip(s,n){ s=String(s); return s.length>n? s.slice(0,n-1)+"…" : s; }
 </script>
 <script>
 /* ---------- roast app ---------- */
-const CASE_URL = "https://solutions-concept.vercel.app/"; // прототип nobody.solutions
+const CASE_URL = /vercel\.app$/.test(location.hostname) && location.hostname!=="solutions-concept.vercel.app" ? "/solutions/" : "https://solutions-concept.vercel.app/"; // прототип nobody.solutions
 (function(){ const t=document.getElementById("caseTile"); if(!t) return;
-  if (CASE_URL){ t.href=CASE_URL; } else { t.removeAttribute("href"); t.removeAttribute("target"); t.querySelector(".cta").textContent="Прототип скоро"; t.style.cursor="default"; } })();
+  if (CASE_URL){ t.href=CASE_URL; if(CASE_URL.startsWith("/")) t.removeAttribute("target"); } else { t.removeAttribute("href"); t.removeAttribute("target"); t.querySelector(".cta").textContent="Прототип скоро"; t.style.cursor="default"; } })();
 
 let R_CHATS=[], R_BASE=null, R_CHAT=null, R_MODE="mild", R_SEED=0;
 const msg2=(t,err)=>{ const m=$("#msg2"); m.textContent=t; m.classList.toggle("err",!!err); };
@@ -1145,5 +1227,18 @@ async function aiNominations(sm, btn){
 }
 </script>
 
+<script>
+/* scroll story: sections flip and scale, pixel burst on arrival */
+(function(){ const scenes=[...document.querySelectorAll(".scene")]; if(!scenes.length||matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const seen=new WeakSet(); let ticking=false;
+  function upd(){ ticking=false; if(!$("#v-home").classList.contains("on")) return; const vh=innerHeight;
+    for(const el of scenes){ const r=el.getBoundingClientRect(); const k=Math.max(-1,Math.min(1,((r.top+Math.min(r.height,vh)/2)-vh/2)/vh));
+      const a=Math.abs(k), rx = k>0? k*26 : k*16, sc=1-0.1*Math.min(1,a*1.3);
+      el.style.transform=`perspective(1400px) rotateX(${rx.toFixed(2)}deg) scale(${sc.toFixed(3)})`;
+      el.style.opacity=String((1-Math.min(.75,a*.95)).toFixed(3));
+      if(a<0.18 && !seen.has(el)){ seen.add(el); const rr=el.getBoundingClientRect(); burst(rr.left+rr.width/2, Math.max(80,Math.min(vh*0.45, rr.top+140)),{square:true,n:64,speed:12,up:1,colors:["#ECECEA","#8C8C8A","#7FBFA4","#0F3A2E"]}); } } }
+  addEventListener("scroll",()=>{ if(!ticking){ ticking=true; requestAnimationFrame(upd); } },{passive:true});
+  addEventListener("resize",upd); addEventListener("hashchange",()=>setTimeout(upd,50)); upd(); })();
+</script>
 </body>
 </html>
