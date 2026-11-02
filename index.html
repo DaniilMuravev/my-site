@@ -398,6 +398,21 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
 #drawRows .dr2{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center}
 #drawRows span{font-size:15px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #drawRows select{margin:0}
+
+@media (max-width:899px){
+  .hero .trail{display:none}
+  .hero h1,.hero p,.hero .lead,.hphoto{animation:none!important}
+  .face .works{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin:0 -26px;padding:0 26px 6px;scrollbar-width:none}
+  .face .works::-webkit-scrollbar{display:none}
+  .face .works .tile{flex:0 0 84%;scroll-snap-align:start;min-height:420px}
+  .face .works .tile.big{min-height:420px}
+  .face.front{overflow:visible}
+  .cgrid{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin:0 -24px;padding:0 24px 6px;scrollbar-width:none}
+  .cgrid::-webkit-scrollbar{display:none}
+  .cgrid .case-card{flex:0 0 86%;scroll-snap-align:start}
+  .swipehint{display:block}
+}
+.swipehint{display:none;color:var(--muted);font-size:13px;margin:-6px 0 12px}
 </style>
 </head>
 <body>
@@ -440,7 +455,7 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
       <div class="flipsticky">
         <div class="flipcard" id="flipcard">
           <div class="face front">
-            <div class="facehead"><h2>Что я собрал сам</h2><span class="facehint">листай дальше, карточка перевернется</span></div>
+            <div class="facehead"><h2>Что я собрал сам</h2><span class="swipehint">листай вбок →</span><span class="facehint">листай дальше, карточка перевернется</span></div>
             <div class="works">
               <a class="tile big" href="#wrapped">
                 <div class="mini" aria-hidden="true">
@@ -452,7 +467,7 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
                 <div class="copy">
                   <div class="chips"><span>GigaChat API</span><span>Vercel</span><span>приватно в браузере</span></div>
                   <h2>Рекап</h2>
-                  <p>Итоги года по переписке в Telegram, как у Spotify: тотем чата, квиз, возраст чата, тепловая карта</p>
+                  <p>Итоги года по переписке в Telegram, как у Spotify: квиз, дуэли, граф слов, тепловая карта и картинка с вашими монстриками</p>
                   <span class="cta">Открыть</span>
                 </div>
               </a>
@@ -494,13 +509,13 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
     </section>
 
     <section class="cases" id="cases">
-      <h2 class="sec">Кейсы коротко</h2>
+      <h2 class="sec">Кейсы коротко</h2><p class="swipehint">листай вбок →</p>
       <div class="cgrid">
         <article class="case-card">
           <p class="tag">Пет-проект · 2026</p><h3>Рекап</h3>
           <dl>
             <dt>Контекст</dt><dd>В декабре все постят итоги года из Spotify и Яндекс Музыки, а итогов по переписке, где люди проводят больше всего времени, нет</dd>
-            <dt>Решение</dt><dd>Загружаешь экспорт Telegram, получаешь сторис: тотем чата, квиз, возраст чата, тепловая карта года, номинации и карточка для шеринга</dd>
+            <dt>Решение</dt><dd>Загружаешь экспорт Telegram, получаешь сторис: квиз, дуэли, граф слов, тепловая карта года, номинации, AI-картинка и карточка для шеринга</dd>
             <dt>Ключевые решения</dt><dd>Переписка считается в браузере и никуда не уходит. В GigaChat отправляются только цифры, без текста. Если AI недоступен, работают шутки по правилам</dd>
             <dt>Стек</dt><dd>GigaChat API, серверная функция Vercel, JS, события в PostHog</dd>
           </dl>
@@ -1547,26 +1562,31 @@ async function aiRecapTexts(r){
     track("ai_recap_done"); return T;
   }catch(e){ return null; }
 }
-function personMonster(p, r){
+function monsterTraits(p, r){
   const share=p.msgs/r.total, night=p.msgs?p.night/p.msgs:0, avg=p.msgs?p.chars/p.msgs:0, laugh=(p.laugh||0)/Math.max(1,p.msgs);
-  const M=[
-    [night>0.15, "ночной монстрик", "пушистый темно-синий ночной монстрик с огромными светящимися глазами, на голове маленький месяц"],
-    [p.medianReply!=null&&p.medianReply<180, "монстрик-молния", "маленький юркий желтый монстрик-молния на ножках-пружинках, вокруг искры"],
-    [p.voice>=10, "монстрик-рупор", "круглый монстрик с огромным ртом-рупором, от него идут звуковые волны"],
+  return [
+    [night>0.15, "ночной монстрик", "темно-синий пушистый ночной монстрик с огромными светящимися глазами и месяцем на макушке"],
+    [p.medianReply!=null&&p.medianReply<180, "монстрик-молния", "юркий желтый монстрик-молния на ножках-пружинках, вокруг него искры"],
+    [p.voice>=10, "монстрик-рупор", "круглый красный монстрик с огромным ртом-рупором, от него расходятся звуковые волны"],
     [share>0.55, "многорукий болтун", "многорукий фиолетовый монстрик, в каждой руке по телефону"],
-    [avg>90, "древний летописец", "старый мудрый мшистый монстрик-черепаха с длинным свитком текста"],
-    [p.medianReply!=null&&p.medianReply>3600, "сонный монстрик", "медленный сонный монстрик-слизняк с будильником на спине"],
-    [p.stickers>=20, "стикерный монстрик", "лоскутный монстрик, весь обклеенный стикерами"],
+    [avg>90, "древний летописец", "старый мудрый мшистый монстрик-черепаха с длинным свитком"],
+    [p.medianReply!=null&&p.medianReply>3600, "сонный монстрик", "медленный сонный голубой монстрик-слизняк с будильником на спине"],
+    [p.stickers>=20, "стикерный монстрик", "лоскутный монстрик, весь обклеенный цветными наклейками без надписей"],
     [laugh>0.15, "хохотун", "круглый оранжевый монстрик, который катается от смеха"],
-    [true, "уютный монстрик", "уютный зеленый монстрик в вязаной шапке"]];
-  const hit=M.find(x=>x[0]); return {label:hit[1], desc:hit[2]};
+    [p.starts>=3, "монстрик-будильник", "бодрый монстрик в форме будильника, который всех будит"],
+    [true, "уютный монстрик", "уютный зеленый монстрик в вязаной шапке"]].filter(x=>x[0]);
 }
+function emojiProps(list){ const out=[]; const add=(re,t)=>{ if(list.some(([e])=>re.test(e))&&!out.includes(t)) out.push(t); };
+  add(/😂|🤣|😆|😹/u,"у обоих слезы от смеха"); add(/😭|💀/u,"оба театрально рыдают от смеха"); add(/❤|🥰|😘|😍|🫶/u,"вокруг парят объемные сердечки");
+  add(/🔥/u,"рядом весело горят маленькие огоньки"); add(/👍|👌/u,"оба показывают большой палец вверх"); add(/🤡|🗿/u,"на одном нелепая клоунская шапочка"); add(/😡|🤬/u,"у одного из ушей идет пар"); add(/🙏/u,"один молитвенно сложил лапки");
+  return out.slice(0,2); }
 async function genImage(sm,btn){
   btn.disabled=true; btn.textContent="Рисую… до минуты";
-  const r=RESULT, top=r.people.slice(0,2), mons=top.map(p=>personMonster(p,r));
-  if(mons.length===2&&mons[0].label===mons[1].label) mons[1]={label:"второй "+mons[1].label, desc:mons[1].desc.replace("монстрик","монстрик другого цвета и формы")};
+  const r=RESULT, top=r.people.slice(0,2), tr=top.map(p=>monsterTraits(p,r));
+  const mons=[]; tr.forEach((list,i)=>{ let pick=list.find(x=>!mons.some(m=>m.label===x[1]))||list[0]; const extra=list.find(x=>x!==pick&&x[1]!=="уютный монстрик");
+    mons.push({label:pick[1], desc:pick[2]+(extra?`, а еще ${extra[2].replace(/^[^,]*монстрик[^,]*,?\s*/,"")||extra[1]}`:"")}); });
   const people=mons.map(m=>({desc:m.desc}));
-  const f={peak_hour:r.peakHour, night_pct:Math.round(r.nightShare*100), total:r.total, top_words:r.topWords.slice(0,8).map(w=>w[0]), top_emoji:r.topEmoji.slice(0,4).map(e=>e[0]), mood:emojiMood(r.topEmoji)};
+  const f={peak_hour:r.peakHour, props:emojiProps(r.topEmoji)};
   try{
     const res=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"image",data:{facts:f,people}})});
     const j=await res.json().catch(()=>({}));
