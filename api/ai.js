@@ -16,8 +16,8 @@ const hits = new Map(); // простой лимит: 10 запросов в м�
 function request(url, { method = "POST", headers = {}, body } = {}) {
   return new Promise((resolve, reject) => {
     const req = https.request(url, { method, headers, agent }, res => {
-      let data = ""; res.on("data", c => (data += c));
-      res.on("end", () => resolve({ status: res.statusCode, text: data }));
+      const chunks = []; res.on("data", c => chunks.push(c));
+      res.on("end", () => { const buf = Buffer.concat(chunks); resolve({ status: res.statusCode, text: buf.toString("utf8"), buf, type: res.headers["content-type"] || "" }); });
     });
     req.on("error", reject);
     req.setTimeout(25000, () => req.destroy(new Error("timeout")));
@@ -54,7 +54,17 @@ function buildPrompt(kind, data) {
 Не повторяй очевидные заготовки, каждая строка должна быть про другую цифру.
 Данные канала (JSON): ${JSON.stringify(data.facts).slice(0, 7000)}
 Верни только JSON без пояснений и без markdown:
-{"arch":"архетип канала, 2-3 слова","archLine":"одна смешная строка про архетип","red":["6 разных ред флагов, каждый с цифрой"],"green":["4 грин флага с цифрой"],"pov":["3 разные строки, каждая начинается с POV:"],"memes":[{"format":"nobody","top":"Никто:","bottom":"смешная концовка про канал"},{"format":"expect","top":"Ожидание: ...","bottom":"Реальность: ..."},{"format":"vs","top":"Подписчики: ...","bottom":"Канал: ..."}],"tips":["4 коротких полезных совета"],"outro":"короткая финальная фраза"}`;
+{"arch":"архетип канала, 2-3 слова","archLine":"одна смешная строка про архетип","red":["6 разных ред флагов, каждый с цифрой"],"green":["4 грин флага с цифрой"],"pov":["3 разные строки, каждая начинается с POV:"],"memes":[{"format":"nobody","top":"Никто:","bottom":"смешная концовка про канал"},{"format":"expect","top":"Ожидание: ...","bottom":"Реальность: ..."},{"format":"vs","top":"Подписчики: ...","bottom":"Канал: ..."}],"tips":["4 коротких полезных совета"],"outro":"короткая финальная фраза"${data.facts && data.facts.post_snippets ? `,"post_roasts":[{"quote":"начало поста из post_snippets, до 60 символов","roast":"острая шутка именно про этот пост"}]` : ""}}
+${data.facts && data.facts.post_snippets ? "В post_roasts разбери 3 разных поста из post_snippets." : ""}`;
+  }
+  if (kind === "recap") {
+    const f = data.facts || {}, ov = f.mode === "overview";
+    return `Ты пишешь подписи к итогам года переписки в Telegram в формате сторис. ${STYLE}
+Пиши коротко: каждая строка до 140 символов. Интерпретируй цифры, говори, что они значат про людей. Не пересказывай число без смысла. Сравнение для книги каждый раз придумывай новое и неожиданное.
+Данные (JSON): ${JSON.stringify(f).slice(0, 7000)}
+Верни только JSON без пояснений и без markdown:
+{"intro":"строка про общий объем",${ov ? "" : '"writers":"строка про то, кто больше пишет",'}"rhythm":"строка про ритм и самый жаркий день","timeTitle":"название для самого активного времени, 2-4 слова","timeLine":"строка про это время","book":"строка с неожиданным сравнением объема текста","words":"строка про слова года и фразу","emoji":"строка про эмодзи","age":"строка про возраст чата","verdict":"финальная фраза, до 60 символов",${ov ? '"roles":[{"t":"название роли","who":"имя из roles","d":"смешное пояснение с цифрой"}]' : '"awards":[{"t":"номинация","who":"имя из people","d":"пояснение с цифрой"}]'}}
+${ov ? "Роли бери из данных roles, имена не меняй, перепиши только названия и пояснения смешнее." : "Номинаций 5, имена только из people."}`;
   }
   if (kind === "nominations") {
     return `Ты придумываешь смешные номинации к итогам года переписки в Telegram по статистике. ${STYLE}
@@ -70,6 +80,26 @@ function parseJson(text) {
   return JSON.parse(clean.slice(start, end + 1));
 }
 
+const API_BASE = API_URL.replace(/\/chat\/completions$/, "");
+function imagePrompt(data) {
+  const f = data.facts || {}, who = { guy: "парень", girl: "девушка", pair: "двое друзей" }[data.who];
+  const time = f.peak_hour < 5 ? "глубокая ночь" : f.peak_hour < 12 ? "утро" : f.peak_hour < 18 ? "день" : "вечер";
+  return `Нарисуй минималистичную иллюстрацию-постер про переписку в мессенджере. ${who ? `На картинке ${who}, стилизованно, без лица крупным планом.` : "Без людей, только предметы и настроение."} Время: ${time}. Настроение и детали по словам: ${(f.top_words || []).slice(0, 6).join(", ")}. Стиль: тонкие белые контурные линии на глубоком темно-изумрудном фоне, латунные акценты, много воздуха, современный японский минимализм. Без текста и букв на изображении.`;
+}
+async function generateImage(data, token) {
+  const r = await request(API_URL, {
+    headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: "Bearer " + token },
+    body: JSON.stringify({ model: MODEL, function_call: "auto", messages: [{ role: "system", content: "Ты художник-иллюстратор" }, { role: "user", content: imagePrompt(data) }] }),
+  });
+  if (r.status !== 200) return { error: "image_unavailable", detail: r.status };
+  const content = JSON.parse(r.text).choices?.[0]?.message?.content || "";
+  const m = content.match(/<img[^>]+src="([^"]+)"/);
+  if (!m) return { error: "image_unavailable", detail: "no image in answer" };
+  const f = await request(`${API_BASE}/files/${m[1]}/content`, { method: "GET", headers: { Accept: "application/jpg", Authorization: "Bearer " + token } });
+  if (f.status !== 200) return { error: "image_unavailable", detail: "file " + f.status };
+  return { image: "data:image/jpeg;base64," + f.buf.toString("base64") };
+}
+
 export default async function handler(req, res) {
   if (req.method === "GET") return res.status(200).json({ ok: !!process.env.GIGACHAT_AUTH_KEY });
   if (req.method !== "POST") return res.status(405).end();
@@ -82,6 +112,11 @@ export default async function handler(req, res) {
 
   try {
     const { kind, data } = req.body || {};
+    if (kind === "image") {
+      const token = await getToken();
+      const out = await generateImage(data || {}, token);
+      return res.status(out.image ? 200 : 502).json(out);
+    }
     const prompt = buildPrompt(kind, data || {});
     if (!prompt) return res.status(400).json({ error: "bad kind" });
     const token = await getToken();
