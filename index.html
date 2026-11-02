@@ -402,17 +402,30 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
 @media (max-width:899px){
   .hero .trail{display:none}
   .hero h1,.hero p,.hero .lead,.hphoto{animation:none!important}
-  .face .works{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin:0 -26px;padding:0 26px 6px;scrollbar-width:none}
+  .face .works{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 26px;gap:12px;margin:0 -26px;padding:0 26px 6px;scrollbar-width:none}
+  .face .works::after{content:"";flex:0 0 14px}
+  .face .works .tile h2{font-size:clamp(26px,7.4vw,34px);overflow-wrap:anywhere}
+  .face .works .tile .chips span{white-space:nowrap}
+  .face .works .tile.case h2{font-size:clamp(18px,5.6vw,26px);overflow-wrap:normal;white-space:nowrap}
+  .face .works .tile.case .tag{font-size:12px;white-space:nowrap}
   .face .works::-webkit-scrollbar{display:none}
   .face .works .tile{flex:0 0 84%;scroll-snap-align:start;min-height:420px}
   .face .works .tile.big{min-height:420px}
   .face.front{overflow:visible}
-  .cgrid{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;gap:12px;margin:0 -24px;padding:0 24px 6px;scrollbar-width:none}
+  .cgrid{display:flex!important;overflow-x:auto;scroll-snap-type:x mandatory;scroll-padding:0 24px;gap:12px;margin:0 -24px;padding:0 24px 6px;scrollbar-width:none}
+  .cgrid::after{content:"";flex:0 0 12px}
   .cgrid::-webkit-scrollbar{display:none}
   .cgrid .case-card{flex:0 0 86%;scroll-snap-align:start}
   .swipehint{display:block}
 }
 .swipehint{display:none;color:var(--muted);font-size:13px;margin:-6px 0 12px}
+
+.tile .cta,.btn{text-align:center;justify-content:center}
+.tile .cta{white-space:nowrap}
+@media (max-width:899px){ .tile .cta{padding:12px 18px;font-size:15px} }
+.slide.endslide{pointer-events:auto;overflow-y:auto;justify-content:flex-start;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+.slide.endslide .inner{padding-bottom:24px}
+.genimg{max-height:38vh;width:auto;max-width:100%;margin:12px auto 0}
 </style>
 </head>
 <body>
@@ -958,7 +971,7 @@ const EMO_MOOD=[[/😂|🤣|😆|😹/u,"Главная эмоция года: �
 function emojiMood(list){ for(const [e] of list){ for(const [re,t] of EMO_MOOD){ if(re.test(e)) return t; } } return "Эмодзи у вас свои, особенные. Как и вы"; }
 function timeBin(h){ return h<6?3: h<12?0: h<18?1: 2; }
 /* slides */
-function fitSlide(){ const sl=document.querySelector("#slideHost .slide"), inn=sl&&sl.querySelector(".inner"); if(!inn) return;
+function fitSlide(){ const sl=document.querySelector("#slideHost .slide"), inn=sl&&sl.querySelector(".inner"); if(!inn||sl.classList.contains("endslide")) return;
   inn.style.transform=""; inn.style.width=""; sl.style.justifyContent="";
   const cs=getComputedStyle(sl), avail=sl.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom), h=inn.scrollHeight;
   if(h>avail){ const k=Math.max(0.6,avail/h); sl.style.justifyContent="flex-start"; inn.style.transformOrigin="top left"; inn.style.transform=`scale(${k.toFixed(3)})`; inn.style.width=(100/k).toFixed(2)+"%"; } }
@@ -1113,7 +1126,7 @@ function render(){
   $("#bars").innerHTML=SL.map((_,i)=>`<i class="${i<idx?"done":i===idx&&dur?"cur":i===idx?"done":""}" style="--dur:${dur}ms"><b></b></i>`).join("");
   if (dur) AUTO=setTimeout(()=>{ if(!$("#stage").classList.contains("paused")) $("#next").click(); }, dur);
   $("#story").className="story "+s.c;
-  $("#slideHost").innerHTML=`<div class="slide ${DIR}"><div class="inner">${s.h}</div></div>`;
+  $("#slideHost").innerHTML=`<div class="slide ${DIR}${s.end?" endslide":""}"><div class="inner">${s.h}</div></div>`;
   const tapsOn=!s.end; $("#next").style.display=tapsOn?"":"none";
   $("#slideHost").querySelectorAll("[data-count]").forEach(el=>el.textContent=num(+el.dataset.count)); fitBigs($("#slideHost")); countUp($("#slideHost")); requestAnimationFrame(()=>fitSlide());
   if (s.confetti && !s.fired){ s.fired=true; const rc=$("#story").getBoundingClientRect(); setTimeout(()=>burst(rc.left+rc.width/2, rc.top+rc.height*0.4),350); }
