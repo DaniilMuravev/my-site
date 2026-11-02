@@ -101,7 +101,15 @@ async function generateImage(data, token) {
 }
 
 export default async function handler(req, res) {
-  if (req.method === "GET") return res.status(200).json({ ok: !!process.env.GIGACHAT_AUTH_KEY });
+  if (req.method === "GET") {
+    if (!(req.query && req.query.check)) return res.status(200).json({ ok: !!process.env.GIGACHAT_AUTH_KEY });
+    const out = { key: !!process.env.GIGACHAT_AUTH_KEY, oauth: false, chat: false };
+    try { const t = await getToken(); out.oauth = true;
+      const r = await request(API_URL, { headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: "Bearer " + t }, body: JSON.stringify({ model: MODEL, max_tokens: 20, messages: [{ role: "user", content: "Скажи привет" }] }) });
+      out.chat = r.status === 200; out.chat_status = r.status; if (r.status !== 200) out.chat_detail = r.text.slice(0, 300);
+    } catch (e) { out.error = String(e.message || e).slice(0, 300); }
+    return res.status(200).json(out);
+  }
   if (req.method !== "POST") return res.status(405).end();
   if (!process.env.GIGACHAT_AUTH_KEY) return res.status(503).json({ error: "no key" });
 

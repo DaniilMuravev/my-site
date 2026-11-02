@@ -380,6 +380,17 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
 .dr{stroke-dasharray:1;stroke-dashoffset:0}
 @media (prefers-reduced-motion:no-preference){ .dr{stroke-dashoffset:1;animation:drawp 1.4s ease forwards} @keyframes drawp{to{stroke-dashoffset:0}} }
 .vcard .art{color:#fff}
+
+.vs{display:flex;justify-content:space-between;align-items:baseline;gap:10px;margin:6px 0 10px;font-size:17px}.vs span{opacity:.6;font-size:14px}
+.tug{margin:10px 0}.tlab{font-size:13px;opacity:.75;text-align:center;margin-bottom:4px}
+.trow{display:grid;grid-template-columns:52px 1fr 52px;gap:8px;align-items:center;font-size:14px}
+.trow span{opacity:.6}.trow span:last-child{text-align:right}.trow span.w{opacity:1;color:#C9A86A;font-weight:600}
+.tb{display:flex;height:10px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.1);gap:2px}
+.tb s{display:block;height:100%;background:rgba(255,255,255,.22);text-decoration:none}.tb s.w{background:#C9A86A}
+.roles div{padding:7px 0}.roles b{font-size:15px}.roles span{font-size:13.5px}
+.aw{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.18)}
+.aw svg{width:30px;height:30px;color:#C9A86A}.aw b{display:block;font-size:16px}.aw span{opacity:.85;font-size:14px}
+.sart{width:72px;height:72px;color:#C9A86A;margin-bottom:6px}
 </style>
 </head>
 <body>
@@ -930,10 +941,13 @@ function heatHtml(r){
 }
 function hottestDay(r){ let best=null,n=0; for(const [k,v] of Object.entries(r.dayCounts||{})) if(v>n){n=v;best=k;} if(!best) return null; const d=new Date(best+"T12:00:00"); return {date:d.toLocaleDateString("ru-RU",{day:"numeric",month:"long"}), n}; }
 function duelHtml(people){
-  const top=people.slice(0,Math.min(4,people.length)); if(top.length<2) return "";
-  const block=(title,f,fmt)=>{ const mx=Math.max(...top.map(f)); if(!mx) return ""; return `<div><h3>${title}</h3><div class="rows">${top.map(p=>`<div class="row"><span>${esc(p.name)}</span><b>${fmt(f(p))}</b><div class="bar"><s style="width:${Math.max(4,f(p)/mx*100)}%"></s></div></div>`).join("")}</div></div>`; };
-  return `<div class="duel">${block("Кто чаще ржет",p=>p.laugh||0,num)}${block("Кто отвечает реплаем",p=>p.rep2||0,num)}${block("Кто правит сообщения",p=>p.edits||0,num)}${block("Кто пишет простынями",p=>p.msgs?Math.round(p.chars/p.msgs):0,v=>v+" симв.")}</div>`;
+  const [A,B]=people; if(!A||!B) return "";
+  const rows=[["Пишет больше",p=>p.msgs],["Чаще ржет",p=>p.laugh||0],["Чаще отвечает реплаем",p=>p.rep2||0],["Чаще правит сообщения",p=>p.edits||0],["Пишет длиннее",p=>p.msgs?Math.round(p.chars/p.msgs):0],["Больше голосовых",p=>p.voice]]
+    .map(([t,f])=>[t,f(A),f(B)]).filter(([,a,b])=>a+b>0).slice(0,5);
+  return `<div class="vs"><b>${esc(A.name)}</b><span>vs</span><b>${esc(B.name)}</b></div>`+rows.map(([t,a,b])=>{ const tot=a+b||1, pa=Math.round(a/tot*100);
+    return `<div class="tug"><div class="tlab">${esc(t)}</div><div class="trow"><span class="${a>=b?"w":""}">${num(a)}</span><div class="tb"><s class="${a>=b?"w":""}" style="width:${pa}%"></s><s class="${b>a?"w":""}" style="width:${100-pa}%"></s></div><span class="${b>a?"w":""}">${num(b)}</span></div></div>`; }).join("");
 }
+
 function bookLine(chars){ const pages=Math.round(chars/1800), mm=pages/480, hours=chars/180/60, eps=Math.round(hours*60/22);
   return {pages, line:`${num(pages)} страниц. Это ${mm>=1? mm.toFixed(1).replace(".",",")+" раза «Мастер и Маргарита»" : Math.round(mm*100)+"% «Мастера и Маргариты»"}. Печатали вы примерно ${num(Math.round(hours))} ч, это ${num(eps)} серий «Друзей»`}; }
 function countUp(root){ root.querySelectorAll("[data-count]").forEach(el=>{ const to=+el.dataset.count; if(matchMedia("(prefers-reduced-motion: reduce)").matches){ el.textContent=num(to); return; } const t0=performance.now(), d=900;
@@ -979,29 +993,27 @@ function wordGraph(messages, year, top){
 }
 function drawGraph(el, g, {color="#fff", accent="#C9A86A", line="rgba(255,255,255,.22)"}={}){
   if(!el||!g.nodes.length) return;
-  const W=el.clientWidth||320, H=el.clientHeight||320, mx=g.nodes[0].n, NS="http://www.w3.org/2000/svg";
+  const W=el.clientWidth||320, H=el.clientHeight||320, mx=g.nodes[0].n, NS="http://www.w3.org/2000/svg", R0=rng(17);
+  const N=g.nodes.map((d,i)=>({...d, x:W/2+(R0()-.5)*W*.6, y:H/2+(R0()-.5)*H*.6, r:4+Math.sqrt(d.n/mx)*11, hub:i<3}));
+  const K=Math.sqrt(W*H/N.length)*0.62, pad=34;
+  for(let it=0, temp=W/8; it<420; it++, temp*=0.985){
+    for(const n of N){ n.dx=0; n.dy=0; }
+    for(let i=0;i<N.length;i++) for(let j=i+1;j<N.length;j++){ const a=N[i], b=N[j]; let dx=a.x-b.x, dy=a.y-b.y; const d=Math.max(1,Math.hypot(dx,dy)), f=K*K/d; dx=dx/d*f; dy=dy/d*f; a.dx+=dx; a.dy+=dy; b.dx-=dx; b.dy-=dy; }
+    for(const e of g.edges){ const a=N[e.a], b=N[e.b]; let dx=a.x-b.x, dy=a.y-b.y; const d=Math.max(1,Math.hypot(dx,dy)), f=d*d/K*0.5; dx=dx/d*f; dy=dy/d*f; a.dx-=dx; a.dy-=dy; b.dx+=dx; b.dy+=dy; }
+    for(const n of N){ n.dx+=(W/2-n.x)*0.05; n.dy+=(H/2-n.y)*0.05*(W/H); const d=Math.max(1,Math.hypot(n.dx,n.dy)), m=Math.min(d,temp); n.x+=n.dx/d*m; n.y+=n.dy/d*m;
+      n.x=Math.max(pad,Math.min(W-pad,n.x)); n.y=Math.max(n.r+18,Math.min(H-n.r-6,n.y)); }
+  }
   el.innerHTML=""; const svg=document.createElementNS(NS,"svg"); svg.setAttribute("viewBox",`0 0 ${W} ${H}`); el.appendChild(svg);
-  const N=g.nodes.map((d,i)=>{ const a=i*2.4, r=30+i*6; return {...d, x:W/2+Math.cos(a)*r*.8, y:H/2+Math.sin(a)*r*.8, vx:0, vy:0, r:4+Math.sqrt(d.n/mx)*11, hub:i<3}; });
-  const L=g.edges.map(e=>{ const l=document.createElementNS(NS,"line"); l.setAttribute("stroke",line); l.setAttribute("stroke-width",String(Math.min(3,0.6+e.w/ (g.edges[0].w||1)*2))); svg.appendChild(l); return {...e, el:l}; });
+  const L=g.edges.map(e=>{ const l=document.createElementNS(NS,"line"); l.setAttribute("stroke",line); l.setAttribute("stroke-width",String(Math.min(3,0.6+e.w/(g.edges[0].w||1)*2))); svg.appendChild(l); return {...e, el:l}; });
   N.forEach(n=>{ n.c=document.createElementNS(NS,"circle"); n.c.setAttribute("r",n.r); n.c.setAttribute("fill",n.hub?accent:color); n.c.setAttribute("fill-opacity",n.hub?"1":".85"); svg.appendChild(n.c);
     n.t=document.createElementNS(NS,"text"); n.t.textContent=n.w; n.t.setAttribute("font-size",String(Math.round(10+n.r*.55))); n.t.setAttribute("text-anchor","middle"); svg.appendChild(n.t); });
-  let heat=1, drag=null;
-  const K=Math.sqrt(W*H/N.length)*0.7;
-  const step=()=>{ for(const n of N){ n.dx=0; n.dy=0; }
-    for(let i=0;i<N.length;i++){ const a=N[i]; for(let j=i+1;j<N.length;j++){ const b=N[j]; let dx=a.x-b.x, dy=a.y-b.y; let d=Math.sqrt(dx*dx+dy*dy)||0.1; const f=K*K/d; dx=dx/d*f; dy=dy/d*f; a.dx+=dx; a.dy+=dy; b.dx-=dx; b.dy-=dy; } }
-    for(const e of L){ const a=N[e.a], b=N[e.b]; let dx=a.x-b.x, dy=a.y-b.y; const d=Math.sqrt(dx*dx+dy*dy)||0.1, f=d*d/K*0.6; dx=dx/d*f; dy=dy/d*f; a.dx-=dx; a.dy-=dy; b.dx+=dx; b.dy+=dy; }
-    const temp=Math.max(0.6, 14*heat);
-    for(const n of N){ if(n===drag) continue; n.dx+=(W/2-n.x)*0.9; n.dy+=(H/2-n.y)*0.9*(W/H);
-      const d=Math.sqrt(n.dx*n.dx+n.dy*n.dy)||1; n.x+=n.dx/d*Math.min(d,temp); n.y+=n.dy/d*Math.min(d,temp);
-      n.x=Math.max(n.r+30,Math.min(W-n.r-30,n.x)); n.y=Math.max(n.r+18,Math.min(H-n.r-6,n.y)); }
-    for(const e of L){ e.el.setAttribute("x1",N[e.a].x); e.el.setAttribute("y1",N[e.a].y); e.el.setAttribute("x2",N[e.b].x); e.el.setAttribute("y2",N[e.b].y); }
+  const paint=()=>{ for(const e of L){ e.el.setAttribute("x1",N[e.a].x); e.el.setAttribute("y1",N[e.a].y); e.el.setAttribute("x2",N[e.b].x); e.el.setAttribute("y2",N[e.b].y); }
     for(const n of N){ n.c.setAttribute("cx",n.x); n.c.setAttribute("cy",n.y); n.t.setAttribute("x",n.x); n.t.setAttribute("y",n.y-n.r-4); } };
-  let frames=0; const loop=()=>{ step(); heat=Math.max(0.15,heat*0.985); if(++frames<400||drag) requestAnimationFrame(loop); else el._sleep=true; };
-  requestAnimationFrame(loop);
-  const pt=e=>{ const r=svg.getBoundingClientRect(); return {x:(e.clientX-r.left)*W/r.width, y:(e.clientY-r.top)*H/r.height}; };
-  N.forEach(n=>n.c.addEventListener("pointerdown",e=>{ e.stopPropagation(); drag=n; heat=1; svg.setPointerCapture(e.pointerId); if(el._sleep){ el._sleep=false; frames=0; requestAnimationFrame(loop); } }));
-  svg.addEventListener("pointermove",e=>{ if(!drag) return; e.stopPropagation(); const p=pt(e); drag.x=p.x; drag.y=p.y; drag.vx=drag.vy=0; });
-  const up=e=>{ if(drag){ e.stopPropagation(); drag=null; frames=200; } }; svg.addEventListener("pointerup",up); svg.addEventListener("pointercancel",up);
+  paint(); svg.style.opacity="0"; svg.style.transition="opacity .5s ease"; requestAnimationFrame(()=>svg.style.opacity="1");
+  let drag=null; const pt=e=>{ const r=svg.getBoundingClientRect(); return {x:(e.clientX-r.left)*W/r.width, y:(e.clientY-r.top)*H/r.height}; };
+  N.forEach(n=>n.c.addEventListener("pointerdown",e=>{ e.stopPropagation(); drag=n; svg.setPointerCapture(e.pointerId); }));
+  svg.addEventListener("pointermove",e=>{ if(!drag) return; e.stopPropagation(); const p=pt(e); drag.x=Math.max(pad,Math.min(W-pad,p.x)); drag.y=Math.max(drag.r+18,Math.min(H-drag.r-6,p.y)); paint(); });
+  const up=e=>{ if(drag){ e.stopPropagation(); drag=null; } }; svg.addEventListener("pointerup",up); svg.addEventListener("pointercancel",up);
 }
 const TX=(r,k,def)=> (r.T&&r.T[k])? r.T[k] : def;
 function buildOverviewSlides(r){
@@ -1010,15 +1022,13 @@ function buildOverviewSlides(r){
   if (r.chats.length>=2){ const opts=shuffle(r.chats.slice(0,3).map(c=>c.name)); S.push({c:"t2",quiz:{opts, ans:r.chats[0].name, rev:`${r.chats[0].name}: ${num(r.chats[0].total)} сообщений. Тут ты живешь`},h:`<p class="k">Угадай</p><h2>В каком чате ты провел больше всего времени?</h2>`}); }
   S.push({c:"t2",h:`<p class="k">Где ты живешь</p><h2>Топ-5 чатов</h2><div class="rows">${r.chats.map(c=>`<div class="row"><span>${esc(c.name)}</span><b>${num(c.total)}</b><div class="bar"><s style="width:${Math.max(4,c.total/max*100)}%"></s></div></div>`).join("")}</div>`});
   const roles=(r.T&&Array.isArray(r.T.roles)&&r.T.roles.length)? r.T.roles : r.roles;
-  if (roles&&roles.length) S.push({c:"t4",confetti:true,h:`<p class="k">Твои люди</p><h2>Кто есть кто в твоем Telegram</h2><div class="roles">${roles.slice(0,6).map(a=>`<div><b>${esc(a.t)}: ${esc(a.who)}</b><span>${esc(a.d)}</span></div>`).join("")}</div>`});
+  if (roles&&roles.length) S.push({c:"t4",confetti:true,h:`<p class="k">Твои люди</p><h2>Кто есть кто в твоем Telegram</h2><div class="roles">${roles.slice(0,4).map(a=>`<div><b>${esc(a.t)}: ${esc(a.who)}</b><span>${esc(a.d)}</span></div>`).join("")}</div>`});
   { const hd=hottestDay(r); S.push({c:"t3",h:`<p class="k">Твой год по дням</p><h2>${r.streak} дн. подряд в сети</h2>${heatHtml(r)}<p>${hd?`Самый болтливый день: ${hd.date}, ${num(hd.n)} твоих сообщений`:""}</p>`}); }
-  { const bk=bookLine(r.totalChars||0); if(bk.pages>0) S.push({c:"t1",h:`<p class="k">Если бы твои сообщения были книгой</p><div class="big" data-count="${bk.pages}">0</div><h2>страниц</h2><p>${esc(TX(r,"book",bk.line))}</p>`}); }
-  S.push({c:"t3",h:`<p class="k">Твое время</p><h2>${esc(TX(r,"timeTitle",hp[0]))}</h2><p>${esc(TX(r,"timeLine",hp[1]))}</p>${hoursHtml(r)}<p>${Math.round(r.nightShare*100)}% твоих сообщений ночью, самый активный месяц ${MONTHS[r.peakMonth]}</p>`});
+  { const bk=bookLine(r.totalChars||0); if(bk.pages>0) S.push({c:"t1",h:`${bookArt()}<p class="k">Если бы твои сообщения были книгой</p><div class="big" data-count="${bk.pages}">0</div><h2>страниц</h2><p>${esc(TX(r,"book",bk.line))}</p>`}); }
+  S.push({c:"t3",h:`${timeArt(r.peakHour)}<p class="k">Твое время</p><h2>${esc(TX(r,"timeTitle",hp[0]))}</h2><p>${esc(TX(r,"timeLine",hp[1]))}</p>${hoursHtml(r)}<p>${Math.round(r.nightShare*100)}% твоих сообщений ночью, самый активный месяц ${MONTHS[r.peakMonth]}</p>`});
   if (r.topWords.length>3) S.push({c:"t7",graph:true,h:`<p class="k">Только твои сообщения</p><h2>Твое слово года: «${esc(r.topWords[0][0])}»</h2><div class="graph" data-graph></div><p style="font-size:14px;opacity:.8">${esc(TX(r,"words","Линии связывают слова, которые ты пишешь вместе. Точки можно таскать"))}</p>`});
   if (r.topEmoji.length) S.push({c:"t1",emoji:true,h:`<p class="k">Твои эмодзи</p><h2>${esc(TX(r,"emoji",emojiMood(r.topEmoji)))}</h2><div class="emojis" data-emojis></div><p style="font-size:15px;opacity:.85">Жми на эмодзи, покажу сколько раз</p>`});
-  const ag=chatAge(r.vibe); r.age=ag.age;
-  S.push({c:"t4",h:`<p class="k">Твой возраст в переписке</p><div class="agebig">${ag.age}</div><h2>${ageWord(ag.age)}</h2><p>${esc(TX(r,"age",ageLine(ag.age)))}</p>${ag.why.length?`<ul class="why">${ag.why.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>`:""}`});
-  S.push({c:"t5",end:true,h:`<p class="k">Готово</p><h2>${esc(TX(r,"verdict","Сохрани карточку и кинь в чат"))}</h2><p data-score>Пусть остальные тоже посмотрят свои итоги</p><div class="endbtns"><button class="btn" id="share">Поделиться карточкой</button><button class="btn ghost" id="dl">Сохранить картинку</button><button class="btn ghost" id="again">Другой чат</button></div>`});
+  S.push({c:"t5",end:true,h:`<p class="k">Готово</p><h2>${esc(TX(r,"verdict","Сохрани карточку и кинь в чат"))}</h2>${heatHtml(r)}<p data-score>Пусть остальные тоже посмотрят свои итоги</p><div class="endbtns"><button class="btn" id="share">Поделиться карточкой</button><button class="btn ghost" id="dl">Сохранить картинку</button><button class="btn ghost" id="again">Другой чат</button></div>`});
   return S;
 }
 function fitBigs(root){ root.querySelectorAll(".big,.aura,.agebig").forEach(el=>{ el.style.fontSize=""; let fs=parseFloat(getComputedStyle(el).fontSize); let guard=0; while(el.scrollWidth>el.clientWidth+1 && fs>24 && guard++<40){ fs-=4; el.style.fontSize=fs+"px"; } }); }
@@ -1049,16 +1059,14 @@ function buildSlides(r){
     const hd=hottestDay(r);
     S.push({c:"t3",h:`<p class="k">Ваш год по дням</p><h2>${r.streak} ${r.streak%10===1&&r.streak%100!==11?"день":"дней"} подряд без перерыва</h2>${heatHtml(r)}<p>${esc(TX(r,"rhythm", hd?`Самый жаркий день: ${hd.date}, ${num(hd.n)} сообщений. Что тогда случилось?`:""))}</p>`});
     const hp=hourPersona(r.peakHour);
-    S.push({c:"t3",h:`<p class="k">Время</p><h2>${esc(TX(r,"timeTitle",hp[0]))}</h2><p>${esc(TX(r,"timeLine",hp[1]))}</p>${hoursHtml(r)}<p>${med!=null?`Ответ прилетает за ${fmtDur(med)}. ${esc(speedLine(med))}`:`Любимый день: ${WD[r.peakWeekday]}`}</p>`});
+    S.push({c:"t3",h:`${timeArt(r.peakHour)}<p class="k">Время</p><h2>${esc(TX(r,"timeTitle",hp[0]))}</h2><p>${esc(TX(r,"timeLine",hp[1]))}</p>${hoursHtml(r)}<p>${med!=null?`Ответ прилетает за ${fmtDur(med)}. ${esc(speedLine(med))}`:`Любимый день: ${WD[r.peakWeekday]}`}</p>`});
     const bk=bookLine(r.totalChars||0);
-    if (bk.pages>0) S.push({c:"t1",h:`<p class="k">Если бы ваш чат был книгой</p><div class="big" data-count="${bk.pages}">0</div><h2>страниц</h2><p>${esc(TX(r,"book",bk.line))}</p>`});
+    if (bk.pages>0) S.push({c:"t1",h:`${bookArt()}<p class="k">Если бы ваш чат был книгой</p><div class="big" data-count="${bk.pages}">0</div><h2>страниц</h2><p>${esc(TX(r,"book",bk.line))}</p>`});
     if (r.topWords.length>3) S.push({c:"t7",graph:true,h:`<p class="k">Ваши словечки</p><h2>Слово года: «${esc(r.topWords[0][0])}»</h2><div class="graph" data-graph></div><p style="font-size:14px;opacity:.8">${esc(TX(r,"words","Линии связывают слова, которые вы пишете вместе. Точки можно таскать"))}</p>`});
     if (r.topEmoji.length) S.push({c:"t1",emoji:true,h:`<p class="k">Эмодзи года</p><h2>${esc(TX(r,"emoji",emojiMood(r.topEmoji)))}</h2><div class="emojis" data-emojis></div><p style="font-size:15px;opacity:.85">Жми на эмодзи</p>`});
-    const ag=chatAge(v); r.age=ag.age;
-    S.push({c:"t4",confetti:true,h:`<p class="k">Возраст чата</p><div class="agebig">${ag.age}</div><h2>${ageWord(ag.age)}</h2><p>${esc(TX(r,"age",ageLine(ag.age)))}</p>${ag.why.length?`<ul class="why">${ag.why.map(w=>`<li>${esc(w)}</li>`).join("")}</ul>`:""}`});
-    if (r.awards.length) S.push({c:"t6",h:`<p class="k">Номинации</p><h2>И награды получают</h2>${r.awards.slice(0,6).map(a=>`<div class="award"><b>${esc(a.t)}: ${esc(a.who)}</b><span>${esc(a.d)}</span></div>`).join("")}`});
+    if (r.awards.length) S.push({c:"t6",h:`<p class="k">Номинации</p><h2>И награды получают</h2>${r.awards.slice(0,5).map(a=>`<div class="aw">${awardIcon(a.t+" "+a.d)}<div><b>${esc(a.t)}: ${esc(a.who)}</b><span>${esc(a.d)}</span></div></div>`).join("")}`});
   }
-  S.push({c:"t5",end:true,h:`<p class="k">Готово</p><h2>${esc(TX(r,"verdict","Сохрани карточку и кинь в чат"))}</h2><p data-score>Пусть остальные тоже посмотрят свои итоги</p><div data-genbox></div><div class="endbtns"><button class="btn" id="share">Поделиться карточкой</button><button class="btn ghost" id="dl">Сохранить картинку</button>${r.channel?"":`<button class="btn ghost" id="genImg" hidden>Нарисовать вашу переписку</button>`}<button class="btn ghost" id="again">Другой чат</button></div>`});
+  S.push({c:"t5",end:true,h:`<p class="k">Готово</p><h2>${esc(TX(r,"verdict","Сохрани карточку и кинь в чат"))}</h2>${heatHtml(r)}<p data-score>Пусть остальные тоже посмотрят свои итоги</p><div data-genbox></div><div class="endbtns"><button class="btn" id="share">Поделиться карточкой</button><button class="btn ghost" id="dl">Сохранить картинку</button>${r.channel?"":`<button class="btn ghost" id="genImg" hidden>Нарисовать вашу переписку</button>`}<button class="btn ghost" id="again">Другой чат</button></div>`});
   return S;
 }
 function hoursHtml(r){ const m=Math.max(...r.hours)||1; return `<div class="hours" aria-hidden="true">${r.hours.map((v,i)=>`<i class="${i===r.peakHour?"peak":""}" style="height:${v/m*100}%"></i>`).join("")}</div><p style="font-size:14px;opacity:.8">0:00 ··· 23:00</p>`; }
@@ -1113,17 +1121,29 @@ async function wrappedBlob(){
   const r=RESULT; const W=1080,H=1350; const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
   try{ await document.fonts.load('80px "Dela Gothic One"'); await document.fonts.load('500 40px "Geologica"'); }catch(e){}
   const F=(w,s)=> (w>=800?`${s}px "Dela Gothic One", system-ui, sans-serif`:`${w} ${s}px "Geologica", system-ui, sans-serif`);
-  x.fillStyle="#0C2B22"; x.fillRect(0,0,W,H); x.strokeStyle="#C9A86A"; x.lineWidth=10; x.beginPath(); x.moveTo(-20,1180); x.bezierCurveTo(300,1040,520,1300,820,1120); x.bezierCurveTo(960,1040,1040,1080,1120,1000); x.stroke();
-  x.fillStyle="#fff"; x.font=F(500,40); x.fillText((r.channel?"Канал ":"")+"«"+clip(r.name,28)+"»", 80,130);
-  x.font=F(500,40); x.globalAlpha=.8; x.fillText(r.year?("Итоги "+r.year):"Итоги за все время",80,190); x.globalAlpha=1;
-  { const t=num(r.channel?r.posts:r.total); let fs=230; x.font=F(800,fs); while(x.measureText(t).width>W-150&&fs>90){ fs-=10; x.font=F(800,fs); } x.fillText(t,70,450); }
-  x.font=F(800,64); x.fillText(r.channel?"постов":"сообщений",80,540);
-  let y=680; x.font=F(500,44);
-  const lines = r.channel
-    ? [num(r.avgViews)+" просмотров в среднем", perWeekText(r.perWeek), ...(r.roast.lines.slice(0,2))]
-    : [...(r.age?[`Возраст чата: ${r.age} ${ageWord(r.age)}`]:[]), ...r.awards.slice(0,2).map(a=>a.t+": "+a.who)];
-  for (const l of lines){ x.fillText(clip(l,36),80,y); y+=78; }
-  x.globalAlpha=.75; x.font=F(500,34); x.fillText("Рекап: итоги года по твоему чату",80,H-90); x.globalAlpha=1;
+  const BR="#C9A86A";
+  x.fillStyle="#0C2B22"; x.fillRect(0,0,W,H);
+  x.fillStyle="#fff"; x.font=F(500,38); x.fillText((r.overview?(r.custom?"Твои люди":"Мой Telegram"):(r.channel?"Канал ":"")+"«"+clip(r.name,26)+"»"),80,120);
+  x.globalAlpha=.7; x.fillText(r.year?("Итоги "+r.year):"Итоги за все время",80,172); x.globalAlpha=1;
+  { const t=num(r.channel?r.posts:r.total); let fs=210; x.font=F(800,fs); while(x.measureText(t).width>W-160&&fs>90){ fs-=10; x.font=F(800,fs); } x.fillText(t,70,400); }
+  x.font=F(800,56); x.fillText(r.channel?"постов":"сообщений",80,480);
+  // heatmap
+  const keys=Object.keys(r.dayCounts||{}).sort();
+  if(keys.length){ const end=new Date(keys.at(-1)+"T12:00:00"), st=new Date(end); st.setDate(end.getDate()-364); st.setDate(st.getDate()-st.getDay());
+    const vals=Object.values(r.dayCounts), mx=Math.max(...vals)||1, cs=14, gap=2.6; let col=0;
+    for(let d=new Date(st); d<=end; d.setDate(d.getDate()+1)){ const k=d.toISOString().slice(0,10), v=r.dayCounts[k]||0, row=d.getDay(); if(row===0&&d>st) col++;
+      x.fillStyle = v? `rgba(201,168,106,${(0.25+0.75*Math.sqrt(v/mx)).toFixed(2)})` : "rgba(255,255,255,.07)";
+      x.beginPath(); x.roundRect(80+col*(cs+gap), 540+row*(cs+gap), cs, cs, 3); x.fill(); } }
+  // achievements
+  const ach = r.channel ? [num(r.avgViews)+" просмотров в среднем", perWeekText(r.perWeek), ...(r.roast.lines.slice(0,1))]
+    : r.overview ? (r.roles||[]).slice(0,3).map(a=>`${a.t}: ${a.who}`)
+    : [ ...(r.topPhrase?[`Фраза года: «${r.topPhrase[0]}»`]:[]), ...r.awards.slice(0,2).map(a=>`${a.t}: ${a.who}`) ];
+  x.fillStyle=BR; x.font=F(500,30); x.fillText("ДОСТИЖЕНИЯ",80,740);
+  x.fillStyle="#fff"; x.font=F(500,42); let y=815;
+  for(const l of ach.slice(0,3)){ x.fillStyle=BR; x.beginPath(); x.arc(92,y-13,7,0,Math.PI*2); x.fill(); x.fillStyle="#fff"; x.fillText(clip(l,38),116,y); y+=78; }
+  if (r.T&&r.T.verdict){ x.globalAlpha=.85; x.font=F(500,36); x.fillText(clip(r.T.verdict,46),80,y+30); x.globalAlpha=1; }
+  x.strokeStyle=BR; x.lineWidth=6; x.beginPath(); x.moveTo(-20,1250); x.bezierCurveTo(300,1150,560,1330,840,1200); x.bezierCurveTo(960,1150,1040,1170,1120,1110); x.stroke();
+  x.globalAlpha=.7; x.font=F(500,32); x.fillStyle="#fff"; x.fillText("Рекап: итоги года по переписке в Telegram",80,H-60); x.globalAlpha=1;
   return await new Promise(res=>c.toBlob(res,"image/png"));
 }
 function clip(s,n){ s=String(s); return s.length>n? s.slice(0,n-1)+"…" : s; }
@@ -1320,7 +1340,7 @@ function getSample(){
   const viaServer=()=>fetch("/api/ai",{method:"GET"}).then(r=>r.ok?r.json():null).then(j=> (j&&j.ok)? {
       kind:"server",
       json: async (_prompt, _opts, meta)=>{ const r=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(meta)});
-        if(r.status===429) throw {code:"rate_limited"}; if(!r.ok) throw {code:"server_error"}; return await r.json(); }
+        if(r.status===429) throw {code:"rate_limited"}; if(!r.ok){ const t=await r.text().catch(()=>""); console.warn("AI server error", r.status, t); throw {code:"server_error", detail:t}; } return await r.json(); }
     } : null).catch(()=>null);
   if(window.claude && claude.use){
     return claude.use("sample").then(x=> x? {kind:"claude", json:(prompt,opts)=>x.json(prompt,opts)} : viaServer()).catch(viaServer).then(a=>(_sample=a));
@@ -1474,8 +1494,8 @@ async function aiNominations(sm, btn){
 <script>
 /* ---------- AI texts for Recap + image ---------- */
 function recapFacts(r){
-  const bk=bookLine(r.totalChars||0), ag=chatAge(r.vibe||vibeStats([],null)), hd=hottestDay(r);
-  const base={period:r.year||"все время", total:r.total, active_days:r.activeDays, peak_hour:r.peakHour, peak_month:MONTHS[r.peakMonth], peak_weekday:WD[r.peakWeekday], night_pct:Math.round(r.nightShare*100), streak_days:r.streak, longest_pause_days:r.silence, hottest_day:hd?`${hd.date}, ${hd.n} сообщений`:null, top_words:r.topWords.slice(0,15).map(w=>w[0]), top_phrase:r.topPhrase?r.topPhrase[0]:null, top_emoji:r.topEmoji.slice(0,5).map(e=>e[0]), book_pages:bk.pages, typing_hours:Math.round((r.totalChars||0)/180/60), chat_age:ag.age, chat_age_reasons:ag.why};
+  const bk=bookLine(r.totalChars||0), hd=hottestDay(r);
+  const base={period:r.year||"все время", total:r.total, active_days:r.activeDays, peak_hour:r.peakHour, peak_month:MONTHS[r.peakMonth], peak_weekday:WD[r.peakWeekday], night_pct:Math.round(r.nightShare*100), streak_days:r.streak, longest_pause_days:r.silence, hottest_day:hd?`${hd.date}, ${hd.n} сообщений`:null, top_words:r.topWords.slice(0,15).map(w=>w[0]), top_phrase:r.topPhrase?r.topPhrase[0]:null, top_emoji:r.topEmoji.slice(0,5).map(e=>e[0]), book_pages:bk.pages, typing_hours:Math.round((r.totalChars||0)/180/60)};
   if (r.overview) return {...base, mode:"overview", my_messages:r.mineTotal, chats_count:r.chatsCount, top_chats:r.chats.map(c=>({name:c.name,total:c.total})), roles:r.roles};
   return {...base, mode:"chat", chat:r.name, people:r.people.slice(0,6).map(p=>({name:p.name, messages:p.msgs, share_pct:Math.round(p.msgs/r.total*100), voice:p.voice, stickers:p.stickers, photos:p.photos, night_pct:p.msgs?Math.round(p.night/p.msgs*100):0, started_conversations:p.starts, median_reply_min:p.medianReply?Math.round(p.medianReply/60):null, longest_monologue:p.run, laughs:p.laugh||0, questions:p.q||0, replies_with_quote:p.rep2||0, edits:p.edits||0, avg_len:p.msgs?Math.round(p.chars/p.msgs):0}))};
 }
@@ -1485,7 +1505,7 @@ function recapPrompt(f){
 Пиши коротко: каждая строка до 140 символов. Интерпретируй цифры, говори, что они значат про людей. Не пересказывай число без смысла. Сравнение для книги каждый раз придумывай новое и неожиданное.
 Данные (JSON): ${JSON.stringify(f)}
 Верни только JSON без пояснений и без markdown:
-{"intro":"строка про общий объем","writers":"${ov?"":"строка про то, кто больше пишет"}","rhythm":"строка про ритм и самый жаркий день","timeTitle":"название для самого активного времени, 2-4 слова","timeLine":"строка про это время","book":"строка с неожиданным сравнением объема текста","words":"строка про слова года и фразу","emoji":"строка про эмодзи","age":"строка про возраст чата","verdict":"финальная фраза, до 60 символов"${ov?`,"roles":[{"t":"название роли","who":"имя из roles","d":"смешное пояснение с цифрой"}]`:`,"awards":[{"t":"номинация","who":"имя из people","d":"пояснение с цифрой"}]`}}
+{"intro":"строка про общий объем","writers":"${ov?"":"строка про то, кто больше пишет"}","rhythm":"строка про ритм и самый жаркий день","timeTitle":"название для самого активного времени, 2-4 слова","timeLine":"строка про это время","book":"строка с неожиданным сравнением объема текста","words":"строка про слова года и фразу","emoji":"строка про эмодзи","verdict":"финальная фраза, до 60 символов"${ov?`,"roles":[{"t":"название роли","who":"имя из roles","d":"смешное пояснение с цифрой"}]`:`,"awards":[{"t":"номинация","who":"имя из people","d":"пояснение с цифрой"}]`}}
 ${ov?"Роли бери из данных roles, имена не меняй, перепиши только названия и пояснения смешнее.":"Номинаций 5, имена только из people."}`;
 }
 async function aiRecapTexts(r){
@@ -1506,15 +1526,15 @@ async function aiRecapTexts(r){
 async function genImage(sm,btn){
   btn.disabled=true; btn.textContent="Рисую… до минуты";
   const r=RESULT, who=($("#drawWho")||{}).value||"none";
-  const f={peak_hour:r.peakHour, night_pct:Math.round(r.nightShare*100), total:r.total, top_words:r.topWords.slice(0,8).map(w=>w[0]), top_emoji:r.topEmoji.slice(0,4).map(e=>e[0]), streak_days:r.streak, chat_age:r.age};
+  const f={peak_hour:r.peakHour, night_pct:Math.round(r.nightShare*100), total:r.total, top_words:r.topWords.slice(0,8).map(w=>w[0]), top_emoji:r.topEmoji.slice(0,4).map(e=>e[0]), streak_days:r.streak};
   try{
     const res=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"image",data:{facts:f,who}})});
     const j=await res.json().catch(()=>({}));
-    if(!res.ok||!j.image) throw j;
+    if(!res.ok||!j.image){ console.warn("image error", j); throw j; }
     RESULT.genImage=j.image; track("image_generated");
     const gb=document.querySelector("#slideHost [data-genbox]"); if(gb){ gb.innerHTML=`<img class="genimg" src="${j.image}" alt="Картинка вашей переписки" title="Нажми, чтобы сохранить">`; gb.querySelector("img").onclick=async(e)=>{ e.stopPropagation(); const b=await (await fetch(j.image)).blob(); saveBlob(b,"recap-art.jpg"); }; }
     btn.textContent="Нарисовать еще"; btn.disabled=false;
-  }catch(e){ btn.disabled=false; btn.textContent="Нарисовать вашу переписку"; toast(e&&e.error==="image_unavailable"?"Картинки пока недоступны на этом тарифе GigaChat":"Не получилось нарисовать, попробуй еще раз"); }
+  }catch(e){ btn.disabled=false; btn.textContent="Нарисовать вашу переписку"; toast(e&&e.error==="image_unavailable"?"Картинки пока недоступны: "+(e.detail||"тариф GigaChat"):"Не получилось нарисовать: "+((e&&e.error)||"ошибка сервера")); }
 }
 </script>
 <script>
@@ -1547,6 +1567,26 @@ function waveSvg(chat, year){
     <g stroke="#C9A86A" stroke-width="2">${burst}</g>
     </svg><p style="margin:6px 0 0;color:#C9A86A;font-size:14px">Пик: ${mx} ${postsWord(mx)} за неделю</p>`;
 }
+</script>
+<script>
+/* ---------- line icons ---------- */
+const IC=p=>`<svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+function awardIcon(t){ t=t.toLowerCase();
+  if(/голос|подкаст|кружк/.test(t)) return IC('<rect x="12" y="4" width="8" height="15" rx="4"/><path d="M8 15a8 8 0 0016 0M16 23v5M11 28h10"/>');
+  if(/ноч|сов|после полуноч/.test(t)) return IC('<path d="M21 5a11 11 0 100 22A9 9 0 0121 5z"/><path d="M25 9l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/>');
+  if(/сапсан|быстр|молни|мгновен/.test(t)) return IC('<path d="M18 3L7 18h8l-2 11 12-16h-8z"/>');
+  if(/почт|медлен|долго|ленив/.test(t)) return IC('<path d="M4 22c0-6 5-10 11-10s9 4 9 8-3 6-7 6H4"/><circle cx="15" cy="18" r="3"/><path d="M24 20l3-6M27 14l1-3"/>');
+  if(/стикер/.test(t)) return IC('<path d="M6 6h20v12l-8 8H6z"/><path d="M18 26v-6a2 2 0 012-2h6"/><path d="M11 13h.01M19 13h.01M11 18c2 2 6 2 8 0"/>');
+  if(/фото|камер|инстаграм/.test(t)) return IC('<rect x="4" y="9" width="24" height="17" rx="3"/><circle cx="16" cy="17" r="5"/><path d="M11 9l2-4h6l2 4"/>');
+  if(/монолог|стендап|подряд/.test(t)) return IC('<path d="M5 13v6l14 6V7z"/><path d="M19 11a6 6 0 010 10M23 8a10 10 0 010 16"/>');
+  if(/будильник|первым|начина/.test(t)) return IC('<circle cx="16" cy="18" r="10"/><path d="M16 12v6l4 2M5 7l4-3M27 7l-4-3"/>');
+  if(/скоб/.test(t)) return IC('<path d="M12 5c-5 6-5 16 0 22M20 5c5 6 5 16 0 22"/>');
+  if(/болтун|сообщен|пишет/.test(t)) return IC('<path d="M5 7h22v14H14l-6 5v-5H5z"/><path d="M10 13h12M10 17h8"/>');
+  return IC('<path d="M16 4l3.5 7.5L28 13l-6 6 1.5 8.5L16 23l-7.5 4.5L10 19l-6-6 8.5-1.5z"/>');
+}
+function timeArt(h){ const night=h<5||h>=22;
+  return `<svg class="sart" viewBox="0 0 72 72" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">${night?'<path class="dr" pathLength="1" d="M44 12a24 24 0 100 48 20 20 0 010-48z"/><path class="dr" pathLength="1" d="M54 18l2 4 4 2-4 2-2 4-2-4-4-2 4-2z"/>':'<circle class="dr" pathLength="1" cx="36" cy="36" r="13"/><path class="dr" pathLength="1" d="M36 8v8M36 56v8M8 36h8M56 36h8M16 16l6 6M50 50l6 6M16 56l6-6M50 22l6-6"/>'}</svg>`; }
+function bookArt(){ return `<svg class="sart" viewBox="0 0 72 72" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="dr" pathLength="1" d="M36 20c-8-6-18-6-26-4v38c8-2 18-2 26 4 8-6 18-6 26-4V16c-8-2-18-2-26 4z"/><path class="dr" pathLength="1" d="M36 20v38M18 28h10M18 36h10M44 28h10M44 36h10"/></svg>`; }
 </script>
 </body>
 </html>
