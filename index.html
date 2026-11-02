@@ -393,6 +393,11 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
 .sart{width:72px;height:72px;color:#C9A86A;margin-bottom:6px}
 
 .slide .inner{width:100%}
+
+#drawRows{display:grid;gap:8px;margin-top:6px}
+#drawRows .dr2{display:grid;grid-template-columns:1fr 1fr;gap:8px;align-items:center}
+#drawRows span{font-size:15px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#drawRows select{margin:0}
 </style>
 </head>
 <body>
@@ -568,7 +573,7 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
           </div>
           <label for="yearSel">Год</label>
           <select id="yearSel"></select>
-          <div class="who"><label for="drawWho">Кого нарисовать на картинке переписки</label><select id="drawWho"><option value="none">Без людей, только настроение</option><option value="guy">Парня</option><option value="girl">Девушку</option><option value="pair">Двоих</option></select></div>
+          <div class="who" id="drawPick" hidden><label>Как нарисовать вас на картинке переписки</label><div id="drawRows"></div></div>
           <div class="mode cz" role="group" aria-label="Цензура"><button type="button" data-cz="1">С цензурой</button><button type="button" data-cz="0">Без цензуры 🤬</button></div>
           <button class="btn primary" id="go">Показать итоги</button>
         </div>
@@ -839,7 +844,13 @@ function renderChatList(){
   box.querySelectorAll("input").forEach(cb=>cb.onchange=()=>{ const i=+cb.dataset.i; cb.checked?PICKED.add(i):PICKED.delete(i); pickHint(); fillYears(); });
   pickHint();
 }
-function pickHint(){ const n=PICKED.size; $("#pickHint").textContent = n===0? "Ничего не выбрано: итоги по всем чатам" : n===1? "Выбран 1 чат: подробный рекап по нему" : "Выбрано "+n+": общий рекап по этим чатам"; }
+function updateDrawPick(){ const box=$("#drawPick"); if(!box) return; const list=selectedChats();
+  if(list.length!==1||/channel/.test(list[0].type||"")){ box.hidden=true; return; }
+  const cnt=new Map(); for(const m of list[0].messages){ if(m.type==="message"&&m.from) cnt.set(m.from,(cnt.get(m.from)||0)+1); }
+  const names=[...cnt.entries()].sort((a,b)=>b[1]-a[1]).slice(0,2).map(x=>x[0]); if(!names.length){ box.hidden=true; return; }
+  $("#drawRows").innerHTML=names.map(n=>`<div class="dr2"><span>${esc(n)}</span><select data-person="${esc(n)}"><option value="creature">Милый персонаж</option><option value="guy">Парень</option><option value="girl">Девушка</option></select></div>`).join("");
+  box.hidden=false; }
+function pickHint(){ updateDrawPick(); const n=PICKED.size; $("#pickHint").textContent = n===0? "Ничего не выбрано: итоги по всем чатам" : n===1? "Выбран 1 чат: подробный рекап по нему" : "Выбрано "+n+": общий рекап по этим чатам"; }
 $("#chatSearch").addEventListener("input",renderChatList);
 $("#pickTop").onclick=()=>{ PICKED=new Set(chatOrder().filter(i=>!/channel/.test(CHATS[i].type||"")).slice(0,5)); renderChatList(); fillYears(); };
 $("#pickNone").onclick=()=>{ PICKED=new Set(); renderChatList(); fillYears(); };
@@ -1536,16 +1547,31 @@ async function aiRecapTexts(r){
     track("ai_recap_done"); return T;
   }catch(e){ return null; }
 }
+function personTraits(p, r){
+  const t=[]; const share=p.msgs/r.total, night=p.msgs?p.night/p.msgs:0;
+  if(share>0.55) t.push("завален телефонами и облаками сообщений, печатает двумя руками одновременно");
+  if(p.voice>=10) t.push("держит огромный микрофон и записывает голосовое");
+  if(night>0.15) t.push("рядом сова, за окном луна, глаза сонные");
+  if(p.medianReply!=null && p.medianReply<180) t.push("от телефона летят молнии, отвечает мгновенно");
+  if(p.medianReply!=null && p.medianReply>3600) t.push("рядом улитка-почтальон медленно везет письмо");
+  if(p.stickers>=20) t.push("с головой в горе стикеров");
+  if(p.photos>=20) t.push("на шее фотоаппарат, вокруг летают фотографии");
+  if((p.laugh||0)/Math.max(1,p.msgs)>0.15) t.push("заливисто хохочет");
+  if(p.starts>=Math.max(3,r.people[0].starts)) t.push("первым тянет руку, чтобы начать разговор");
+  if(!t.length) t.push("спокойно переписывается, держит телефон");
+  return t.slice(0,3);
+}
 async function genImage(sm,btn){
   btn.disabled=true; btn.textContent="Рисую… до минуты";
-  const r=RESULT, who=($("#drawWho")||{}).value||"none";
-  const f={peak_hour:r.peakHour, night_pct:Math.round(r.nightShare*100), total:r.total, top_words:r.topWords.slice(0,8).map(w=>w[0]), top_emoji:r.topEmoji.slice(0,4).map(e=>e[0]), streak_days:r.streak};
+  const r=RESULT, sel=[...document.querySelectorAll("#drawRows select")], g=new Map(sel.map(x=>[x.dataset.person,x.value]));
+  const people=r.people.slice(0,2).map(p=>({kind:g.get(p.name)||"creature", traits:personTraits(p,r)}));
+  const f={peak_hour:r.peakHour, night_pct:Math.round(r.nightShare*100), total:r.total, top_words:r.topWords.slice(0,8).map(w=>w[0]), top_emoji:r.topEmoji.slice(0,4).map(e=>e[0]), mood:emojiMood(r.topEmoji)};
   try{
-    const res=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"image",data:{facts:f,who}})});
+    const res=await fetch("/api/ai",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({kind:"image",data:{facts:f,people}})});
     const j=await res.json().catch(()=>({}));
     if(!res.ok||!j.image){ console.warn("image error", j); throw j; }
     RESULT.genImage=j.image; track("image_generated");
-    const gb=document.querySelector("#slideHost [data-genbox]"); if(gb){ gb.innerHTML=`<img class="genimg" src="${j.image}" alt="Картинка вашей переписки" title="Нажми, чтобы сохранить">`; gb.querySelector("img").onclick=async(e)=>{ e.stopPropagation(); const b=await (await fetch(j.image)).blob(); saveBlob(b,"recap-art.jpg"); }; }
+    const gb=document.querySelector("#slideHost [data-genbox]"); if(gb){ gb.innerHTML=`<img class="genimg" src="${j.image}" alt="Картинка вашей переписки" title="Нажми, чтобы сохранить">`; gb.querySelector("img").onclick=async(e)=>{ e.stopPropagation(); const b=await (await fetch(j.image)).blob(); saveBlob(b,"recap-art.jpg"); }; fitSlide(); }
     btn.textContent="Нарисовать еще"; btn.disabled=false;
   }catch(e){ btn.disabled=false; btn.textContent="Нарисовать вашу переписку"; toast(e&&e.error==="image_unavailable"?"Картинки пока недоступны: "+(e.detail||"тариф GigaChat"):"Не получилось нарисовать: "+((e&&e.error)||"ошибка сервера")); }
 }
