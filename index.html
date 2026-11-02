@@ -391,6 +391,8 @@ select{font:inherit;padding:12px 14px;border-radius:14px;border:1px solid var(--
 .aw{display:grid;grid-template-columns:34px 1fr;gap:10px;align-items:start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.18)}
 .aw svg{width:30px;height:30px;color:#C9A86A}.aw b{display:block;font-size:16px}.aw span{opacity:.85;font-size:14px}
 .sart{width:72px;height:72px;color:#C9A86A;margin-bottom:6px}
+
+.slide .inner{width:100%}
 </style>
 </head>
 <body>
@@ -930,6 +932,10 @@ const EMO_MOOD=[[/😂|🤣|😆|😹/u,"Главная эмоция года: �
 function emojiMood(list){ for(const [e] of list){ for(const [re,t] of EMO_MOOD){ if(re.test(e)) return t; } } return "Эмодзи у вас свои, особенные. Как и вы"; }
 function timeBin(h){ return h<6?3: h<12?0: h<18?1: 2; }
 /* slides */
+function fitSlide(){ const sl=document.querySelector("#slideHost .slide"), inn=sl&&sl.querySelector(".inner"); if(!inn) return;
+  inn.style.transform=""; inn.style.width=""; sl.style.justifyContent="";
+  const cs=getComputedStyle(sl), avail=sl.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom), h=inn.scrollHeight;
+  if(h>avail){ const k=Math.max(0.6,avail/h); sl.style.justifyContent="flex-start"; inn.style.transformOrigin="top left"; inn.style.transform=`scale(${k.toFixed(3)})`; inn.style.width=(100/k).toFixed(2)+"%"; } }
 function heatHtml(r){
   const keys=Object.keys(r.dayCounts||{}).sort(); if(!keys.length) return "";
   const end=new Date(keys.at(-1)+"T12:00:00"); const start=new Date(end); start.setDate(end.getDate()-364);
@@ -948,8 +954,8 @@ function duelHtml(people){
     return `<div class="tug"><div class="tlab">${esc(t)}</div><div class="trow"><span class="${a>=b?"w":""}">${num(a)}</span><div class="tb"><s class="${a>=b?"w":""}" style="width:${pa}%"></s><s class="${b>a?"w":""}" style="width:${100-pa}%"></s></div><span class="${b>a?"w":""}">${num(b)}</span></div></div>`; }).join("");
 }
 
-function bookLine(chars){ const pages=Math.round(chars/1800), mm=pages/480, hours=chars/180/60, eps=Math.round(hours*60/22);
-  return {pages, line:`${num(pages)} страниц. Это ${mm>=1? mm.toFixed(1).replace(".",",")+" раза «Мастер и Маргарита»" : Math.round(mm*100)+"% «Мастера и Маргариты»"}. Печатали вы примерно ${num(Math.round(hours))} ч, это ${num(eps)} серий «Друзей»`}; }
+function bookLine(chars){ const screens=Math.round(chars/450), readMin=Math.round(chars/1000), reels=Math.round(readMin*60/30), posts=Math.round(chars/280), typeH=Math.round(chars/180/60);
+  return {pages:screens, screens, readMin, reels, posts, typeH, line:`Если листать подряд, это ${num(readMin)} минут чтения, примерно как ${num(reels)} рилсов. Печатали вы около ${num(typeH)} ч`}; }
 function countUp(root){ root.querySelectorAll("[data-count]").forEach(el=>{ const to=+el.dataset.count; if(matchMedia("(prefers-reduced-motion: reduce)").matches){ el.textContent=num(to); return; } const t0=performance.now(), d=900;
   const step=t=>{ const k=Math.min(1,(t-t0)/d), e=1-Math.pow(1-k,3); el.textContent=num(Math.round(to*e)); if(k<1) requestAnimationFrame(step); }; requestAnimationFrame(step); }); }
 function burst(x,y,opts={}){ if(matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -1024,7 +1030,7 @@ function buildOverviewSlides(r){
   const roles=(r.T&&Array.isArray(r.T.roles)&&r.T.roles.length)? r.T.roles : r.roles;
   if (roles&&roles.length) S.push({c:"t4",confetti:true,h:`<p class="k">Твои люди</p><h2>Кто есть кто в твоем Telegram</h2><div class="roles">${roles.slice(0,4).map(a=>`<div><b>${esc(a.t)}: ${esc(a.who)}</b><span>${esc(a.d)}</span></div>`).join("")}</div>`});
   { const hd=hottestDay(r); S.push({c:"t3",h:`<p class="k">Твой год по дням</p><h2>${r.streak} дн. подряд в сети</h2>${heatHtml(r)}<p>${hd?`Самый болтливый день: ${hd.date}, ${num(hd.n)} твоих сообщений`:""}</p>`}); }
-  { const bk=bookLine(r.totalChars||0); if(bk.pages>0) S.push({c:"t1",h:`${bookArt()}<p class="k">Если бы твои сообщения были книгой</p><div class="big" data-count="${bk.pages}">0</div><h2>страниц</h2><p>${esc(TX(r,"book",bk.line))}</p>`}); }
+  { const bk=bookLine(r.totalChars||0); if(bk.pages>0) S.push({c:"t1",h:`${bookArt()}<p class="k">Если бы твои сообщения были лентой</p><div class="big" data-count="${bk.screens}">0</div><h2>экранов телефона</h2><p>${esc(TX(r,"book",bk.line))}</p>`}); }
   S.push({c:"t3",h:`${timeArt(r.peakHour)}<p class="k">Твое время</p><h2>${esc(TX(r,"timeTitle",hp[0]))}</h2><p>${esc(TX(r,"timeLine",hp[1]))}</p>${hoursHtml(r)}<p>${Math.round(r.nightShare*100)}% твоих сообщений ночью, самый активный месяц ${MONTHS[r.peakMonth]}</p>`});
   if (r.topWords.length>3) S.push({c:"t7",graph:true,h:`<p class="k">Только твои сообщения</p><h2>Твое слово года: «${esc(r.topWords[0][0])}»</h2><div class="graph" data-graph></div><p style="font-size:14px;opacity:.8">${esc(TX(r,"words","Линии связывают слова, которые ты пишешь вместе. Точки можно таскать"))}</p>`});
   if (r.topEmoji.length) S.push({c:"t1",emoji:true,h:`<p class="k">Твои эмодзи</p><h2>${esc(TX(r,"emoji",emojiMood(r.topEmoji)))}</h2><div class="emojis" data-emojis></div><p style="font-size:15px;opacity:.85">Жми на эмодзи, покажу сколько раз</p>`});
@@ -1061,7 +1067,7 @@ function buildSlides(r){
     const hp=hourPersona(r.peakHour);
     S.push({c:"t3",h:`${timeArt(r.peakHour)}<p class="k">Время</p><h2>${esc(TX(r,"timeTitle",hp[0]))}</h2><p>${esc(TX(r,"timeLine",hp[1]))}</p>${hoursHtml(r)}<p>${med!=null?`Ответ прилетает за ${fmtDur(med)}. ${esc(speedLine(med))}`:`Любимый день: ${WD[r.peakWeekday]}`}</p>`});
     const bk=bookLine(r.totalChars||0);
-    if (bk.pages>0) S.push({c:"t1",h:`${bookArt()}<p class="k">Если бы ваш чат был книгой</p><div class="big" data-count="${bk.pages}">0</div><h2>страниц</h2><p>${esc(TX(r,"book",bk.line))}</p>`});
+    if (bk.pages>0) S.push({c:"t1",h:`${bookArt()}<p class="k">Если бы ваш чат был лентой</p><div class="big" data-count="${bk.screens}">0</div><h2>экранов телефона</h2><p>${esc(TX(r,"book",bk.line))}</p>`});
     if (r.topWords.length>3) S.push({c:"t7",graph:true,h:`<p class="k">Ваши словечки</p><h2>Слово года: «${esc(r.topWords[0][0])}»</h2><div class="graph" data-graph></div><p style="font-size:14px;opacity:.8">${esc(TX(r,"words","Линии связывают слова, которые вы пишете вместе. Точки можно таскать"))}</p>`});
     if (r.topEmoji.length) S.push({c:"t1",emoji:true,h:`<p class="k">Эмодзи года</p><h2>${esc(TX(r,"emoji",emojiMood(r.topEmoji)))}</h2><div class="emojis" data-emojis></div><p style="font-size:15px;opacity:.85">Жми на эмодзи</p>`});
     if (r.awards.length) S.push({c:"t6",h:`<p class="k">Номинации</p><h2>И награды получают</h2>${r.awards.slice(0,5).map(a=>`<div class="aw">${awardIcon(a.t+" "+a.d)}<div><b>${esc(a.t)}: ${esc(a.who)}</b><span>${esc(a.d)}</span></div></div>`).join("")}`});
@@ -1081,9 +1087,9 @@ function render(){
   $("#bars").innerHTML=SL.map((_,i)=>`<i class="${i<idx?"done":i===idx&&dur?"cur":i===idx?"done":""}" style="--dur:${dur}ms"><b></b></i>`).join("");
   if (dur) AUTO=setTimeout(()=>{ if(!$("#stage").classList.contains("paused")) $("#next").click(); }, dur);
   $("#story").className="story "+s.c;
-  $("#slideHost").innerHTML=`<div class="slide ${DIR}">${s.h}</div>`;
+  $("#slideHost").innerHTML=`<div class="slide ${DIR}"><div class="inner">${s.h}</div></div>`;
   const tapsOn=!s.end; $("#next").style.display=tapsOn?"":"none";
-  $("#slideHost").querySelectorAll("[data-count]").forEach(el=>el.textContent=num(+el.dataset.count)); fitBigs($("#slideHost")); countUp($("#slideHost"));
+  $("#slideHost").querySelectorAll("[data-count]").forEach(el=>el.textContent=num(+el.dataset.count)); fitBigs($("#slideHost")); countUp($("#slideHost")); requestAnimationFrame(()=>fitSlide());
   if (s.confetti && !s.fired){ s.fired=true; const rc=$("#story").getBoundingClientRect(); setTimeout(()=>burst(rc.left+rc.width/2, rc.top+rc.height*0.4),350); }
   if (s.end){ const qs=SL.filter(x=>x.quiz&&x.quiz.picked), ok=qs.filter(x=>x.quiz.picked===x.quiz.ans).length; const el=document.querySelector("#slideHost [data-score]"); if(el&&qs.length) el.textContent=`Ты угадал ${ok} из ${qs.length}. ${ok===qs.length?"Знаешь свой чат как облупленный":"Есть куда расти. Пусть друзья попробуют"}`; }
   if (s.cloud){ const el=document.querySelector("#slideHost [data-cloud]"); s.mode=s.mode||0; const draw=()=>drawCloud(el, RESULT.topWords, {color:"#fff", accent:"#C9A86A", mode:["mix","flat","cross"][s.mode%3], seed:s.mode});
@@ -1094,7 +1100,7 @@ function render(){
     box.querySelectorAll("button").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); toast(b.textContent+" × "+num(+b.dataset.n)); }); }
   if (s.quiz){ const q=s.quiz; const wrap=document.createElement("div"); wrap.className="qopts";
     wrap.innerHTML=q.opts.map(o=>`<button class="qopt">${esc(o)}</button>`).join("")+`<div class="qreveal"></div>`;
-    document.querySelector("#slideHost .slide").appendChild(wrap);
+    document.querySelector("#slideHost .slide .inner").appendChild(wrap); fitSlide();
     const show=()=>{ wrap.querySelectorAll(".qopt").forEach(b=>{ if(b.textContent===q.ans) b.classList.add("right"); else if(b.textContent===q.picked) b.classList.add("wrong"); }); wrap.querySelector(".qreveal").textContent=(q.picked===q.ans?"Угадал! ":"Мимо. ")+q.rev; };
     if (q.picked) show();
     wrap.querySelectorAll(".qopt").forEach(b=>b.onclick=(e)=>{ e.stopPropagation(); if(q.picked) return; q.picked=b.textContent; track("quiz_answered",{right:q.picked===q.ans}); show();
@@ -1118,32 +1124,38 @@ addEventListener("keydown",e=>{ if(!$("#stage").classList.contains("on")) return
 
 /* share card */
 async function wrappedBlob(){
-  const r=RESULT; const W=1080,H=1350; const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
+  const r=RESULT; const W=1080,H=1350,M=80,MW=W-2*M; const c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
   try{ await document.fonts.load('80px "Dela Gothic One"'); await document.fonts.load('500 40px "Geologica"'); }catch(e){}
-  const F=(w,s)=> (w>=800?`${s}px "Dela Gothic One", system-ui, sans-serif`:`${w} ${s}px "Geologica", system-ui, sans-serif`);
-  const BR="#C9A86A";
+  const F=(w,s)=> (w>=800?`${s}px "Dela Gothic One", system-ui, sans-serif`:`${w} ${s}px "Geologica", system-ui, sans-serif`), BR="#C9A86A";
   x.fillStyle="#0C2B22"; x.fillRect(0,0,W,H);
-  x.fillStyle="#fff"; x.font=F(500,38); x.fillText((r.overview?(r.custom?"Твои люди":"Мой Telegram"):(r.channel?"Канал ":"")+"«"+clip(r.name,26)+"»"),80,120);
-  x.globalAlpha=.7; x.fillText(r.year?("Итоги "+r.year):"Итоги за все время",80,172); x.globalAlpha=1;
-  { const t=num(r.channel?r.posts:r.total); let fs=210; x.font=F(800,fs); while(x.measureText(t).width>W-160&&fs>90){ fs-=10; x.font=F(800,fs); } x.fillText(t,70,400); }
-  x.font=F(800,56); x.fillText(r.channel?"постов":"сообщений",80,480);
+  x.fillStyle="#fff"; x.font=F(500,36); x.fillText(clip(r.overview?(r.custom?"Твои люди":"Мой Telegram"):"«"+r.name+"»",34),M,112);
+  x.globalAlpha=.65; x.font=F(500,32); x.fillText(r.year?("Итоги "+r.year):"Итоги за все время",M,160); x.globalAlpha=1;
+  const t=num(r.total); fitFont(x,t,MW*0.62,190,80,s=>F(800,s)); x.fillText(t,M-6,350);
+  x.font=F(800,46); x.fillText("сообщений",M,410);
+  // hours mini chart at right
+  const hx=M+MW*0.66, hw=MW*0.34, hh=150, hmx=Math.max(...r.hours)||1; x.fillStyle="rgba(255,255,255,.12)";
+  r.hours.forEach((v,i)=>{ const bh=Math.max(4,v/hmx*hh), bw=hw/24-3; x.fillStyle= i===r.peakHour? BR : "rgba(255,255,255,.28)"; x.fillRect(hx+i*(hw/24), 410-bh, bw, bh); });
+  x.fillStyle="rgba(255,255,255,.65)"; x.font=F(500,24); x.fillText(`пик в ${r.peakHour}:00`, hx, 446);
   // heatmap
   const keys=Object.keys(r.dayCounts||{}).sort();
   if(keys.length){ const end=new Date(keys.at(-1)+"T12:00:00"), st=new Date(end); st.setDate(end.getDate()-364); st.setDate(st.getDate()-st.getDay());
     const vals=Object.values(r.dayCounts), mx=Math.max(...vals)||1, cs=14, gap=2.6; let col=0;
     for(let d=new Date(st); d<=end; d.setDate(d.getDate()+1)){ const k=d.toISOString().slice(0,10), v=r.dayCounts[k]||0, row=d.getDay(); if(row===0&&d>st) col++;
-      x.fillStyle = v? `rgba(201,168,106,${(0.25+0.75*Math.sqrt(v/mx)).toFixed(2)})` : "rgba(255,255,255,.07)";
-      x.beginPath(); x.roundRect(80+col*(cs+gap), 540+row*(cs+gap), cs, cs, 3); x.fill(); } }
+      x.fillStyle = v? `rgba(201,168,106,${(0.25+0.75*Math.sqrt(v/mx)).toFixed(2)})` : "rgba(255,255,255,.07)"; x.beginPath(); x.roundRect(M+col*(cs+gap), 500+row*(cs+gap), cs, cs, 3); x.fill(); } }
+  // duel bar (single chat)
+  let y=680;
+  if(!r.overview && r.people.length>=2){ const [A,B]=r.people, tot=A.msgs+B.msgs, pa=A.msgs/tot; x.font=F(500,30); x.fillStyle="#fff";
+    x.fillText(clip(A.name,14),M,y); const bw=x.measureText(clip(B.name,14)).width; x.fillText(clip(B.name,14),W-M-bw,y);
+    x.fillStyle=BR; x.beginPath(); x.roundRect(M,y+18,MW*pa-3,18,9); x.fill(); x.fillStyle="rgba(255,255,255,.25)"; x.beginPath(); x.roundRect(M+MW*pa+3,y+18,MW*(1-pa)-3,18,9); x.fill();
+    x.font=F(500,26); x.fillStyle="rgba(255,255,255,.8)"; x.fillText(Math.round(pa*100)+"%",M,y+72); const pb=Math.round((1-pa)*100)+"%"; x.fillText(pb,W-M-x.measureText(pb).width,y+72); y+=130; }
+  else y+=20;
   // achievements
-  const ach = r.channel ? [num(r.avgViews)+" просмотров в среднем", perWeekText(r.perWeek), ...(r.roast.lines.slice(0,1))]
-    : r.overview ? (r.roles||[]).slice(0,3).map(a=>`${a.t}: ${a.who}`)
-    : [ ...(r.topPhrase?[`Фраза года: «${r.topPhrase[0]}»`]:[]), ...r.awards.slice(0,2).map(a=>`${a.t}: ${a.who}`) ];
-  x.fillStyle=BR; x.font=F(500,30); x.fillText("ДОСТИЖЕНИЯ",80,740);
-  x.fillStyle="#fff"; x.font=F(500,42); let y=815;
-  for(const l of ach.slice(0,3)){ x.fillStyle=BR; x.beginPath(); x.arc(92,y-13,7,0,Math.PI*2); x.fill(); x.fillStyle="#fff"; x.fillText(clip(l,38),116,y); y+=78; }
-  if (r.T&&r.T.verdict){ x.globalAlpha=.85; x.font=F(500,36); x.fillText(clip(r.T.verdict,46),80,y+30); x.globalAlpha=1; }
-  x.strokeStyle=BR; x.lineWidth=6; x.beginPath(); x.moveTo(-20,1250); x.bezierCurveTo(300,1150,560,1330,840,1200); x.bezierCurveTo(960,1150,1040,1170,1120,1110); x.stroke();
-  x.globalAlpha=.7; x.font=F(500,32); x.fillStyle="#fff"; x.fillText("Рекап: итоги года по переписке в Telegram",80,H-60); x.globalAlpha=1;
+  const ach = r.overview ? (r.roles||[]).slice(0,3).map(a=>`${a.t}: ${a.who}`) : [ ...(r.topPhrase?[`Фраза года: «${r.topPhrase[0]}»`]:[]), ...r.awards.slice(0,3).map(a=>`${a.t}: ${a.who}`) ].slice(0,3);
+  x.fillStyle=BR; x.font=F(500,28); x.fillText("ДОСТИЖЕНИЯ",M,y); y+=58; x.font=F(500,38);
+  for(const l of ach){ if(y>H-210) break; x.fillStyle=BR; x.beginPath(); x.arc(M+10,y-12,7,0,Math.PI*2); x.fill(); x.fillStyle="#fff"; y=drawWrap(x,l,M+34,y,MW-34,48,2)+18; }
+  if (r.topWords.length && y<H-200){ x.fillStyle="rgba(255,255,255,.7)"; x.font=F(500,30); drawWrap(x,"Слова года: "+r.topWords.slice(0,4).map(w=>w[0]).join(" · "),M,y+10,MW,40,1); }
+  x.strokeStyle=BR; x.lineWidth=5; x.beginPath(); x.moveTo(-20,1262); x.bezierCurveTo(300,1180,560,1330,840,1230); x.bezierCurveTo(960,1190,1040,1200,1120,1160); x.stroke();
+  x.globalAlpha=.7; x.font=F(500,28); x.fillStyle="#fff"; x.fillText("Рекап · итоги года по переписке в Telegram",M,H-48); x.globalAlpha=1;
   return await new Promise(res=>c.toBlob(res,"image/png"));
 }
 function clip(s,n){ s=String(s); return s.length>n? s.slice(0,n-1)+"…" : s; }
@@ -1310,17 +1322,18 @@ function renderRoast(keepScroll){
   if (!keepScroll) out.scrollIntoView({block:"start"});
 }
 async function roastBlob(){
-  const r=window.__ROAST, W=1080,H=1350, c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
+  const r=window.__ROAST, W=1080,H=1350,M=80,MW=W-2*M, c=document.createElement("canvas"); c.width=W; c.height=H; const x=c.getContext("2d");
   try{ await document.fonts.load('80px "Dela Gothic One"'); await document.fonts.load('400 40px "Geologica"'); }catch(e){}
-  const D=s=>`${s}px "Dela Gothic One", Impact, sans-serif`, B=s=>`400 ${s}px "Geologica", system-ui, sans-serif`;
+  const D=s=>`${s}px "Dela Gothic One", Impact, sans-serif`, B=s=>`400 ${s}px "Geologica", system-ui, sans-serif`, BR="#C9A86A";
   x.fillStyle="#6E2F1E"; x.fillRect(0,0,W,H);
-  x.fillStyle="#fff"; x.font=B(40); x.fillText("Прожарка канала «"+clip(R_BASE.name,24)+"»",80,130);
-  x.font=D(250); x.fillText((r.aura>0?"+":"")+num(r.aura),70,420);
-  x.font=B(44); x.fillText("ауры",84,490);
-  x.font=D(70); x.fillText(clip(r.arch,22),80,620);
-  x.font=B(38); let y=730;
-  for (const l of r.red.slice(0,3)){ const lines=wrapText(x,"🚩 "+l,920); for(const ln of lines.slice(0,2)){ x.fillText(ln,80,y); y+=52; } y+=26; }
-  x.globalAlpha=.8; x.font=B(34); x.fillText("Прожарь свой канал",80,H-90); x.globalAlpha=1;
+  x.fillStyle="#fff"; x.font=B(34); x.fillText("Прожарка канала",M,110); x.font=B(40); x.fillText(clip("«"+R_BASE.name+"»",30),M,165);
+  const art=await svgImg(roastArt(r.aura),"#ffffff"); if(art) x.drawImage(art,W-M-230,70,230,230);
+  const au=(r.aura>0?"+":"")+num(r.aura); fitFont(x,au,MW-250,220,90,D); x.fillText(au,M-6,400); x.font=B(40); x.fillText("ауры",M,456);
+  x.font=D(58); let y=drawWrap(x,r.arch,M,560,MW,66,2);
+  x.globalAlpha=.85; x.font=B(34); y=drawWrap(x,r.archLine,M,y+6,MW,44,2); x.globalAlpha=1;
+  const vals=weekly(R_CHAT,R_BASE.year); if(vals.length>2){ x.fillStyle="rgba(255,255,255,.7)"; x.font=B(26); x.fillText("Волна постов",M,y+60); drawWave(x,vals,M,y+80,MW,150,"#ffffff",BR); y+=270; }
+  x.fillStyle=BR; x.font=B(28); x.fillText("ГЛАВНЫЙ РЕД ФЛАГ",M,y+40); x.fillStyle="#fff"; x.font=B(38); y=drawWrap(x,r.red[0]||"",M,y+96,MW,48,3);
+  x.globalAlpha=.7; x.font=B(28); x.fillText("Прожарь свой канал",M,H-56); x.globalAlpha=1;
   return await new Promise(res=>c.toBlob(res,"image/png"));
 }
 function wrapText(ctx,text,max){ const w=text.split(" "), out=[]; let line=""; for(const word of w){ const t=line?line+" "+word:word; if(ctx.measureText(t).width>max && line){ out.push(line); line=word; } else line=t; } if(line) out.push(line); return out; }
@@ -1495,7 +1508,7 @@ async function aiNominations(sm, btn){
 /* ---------- AI texts for Recap + image ---------- */
 function recapFacts(r){
   const bk=bookLine(r.totalChars||0), hd=hottestDay(r);
-  const base={period:r.year||"все время", total:r.total, active_days:r.activeDays, peak_hour:r.peakHour, peak_month:MONTHS[r.peakMonth], peak_weekday:WD[r.peakWeekday], night_pct:Math.round(r.nightShare*100), streak_days:r.streak, longest_pause_days:r.silence, hottest_day:hd?`${hd.date}, ${hd.n} сообщений`:null, top_words:r.topWords.slice(0,15).map(w=>w[0]), top_phrase:r.topPhrase?r.topPhrase[0]:null, top_emoji:r.topEmoji.slice(0,5).map(e=>e[0]), book_pages:bk.pages, typing_hours:Math.round((r.totalChars||0)/180/60)};
+  const base={period:r.year||"все время", total:r.total, active_days:r.activeDays, peak_hour:r.peakHour, peak_month:MONTHS[r.peakMonth], peak_weekday:WD[r.peakWeekday], night_pct:Math.round(r.nightShare*100), streak_days:r.streak, longest_pause_days:r.silence, hottest_day:hd?`${hd.date}, ${hd.n} сообщений`:null, top_words:r.topWords.slice(0,15).map(w=>w[0]), top_phrase:r.topPhrase?r.topPhrase[0]:null, top_emoji:r.topEmoji.slice(0,5).map(e=>e[0]), phone_screens:bk.screens, read_minutes:bk.readMin, reels_equivalent:bk.reels, typing_hours:bk.typeH};
   if (r.overview) return {...base, mode:"overview", my_messages:r.mineTotal, chats_count:r.chatsCount, top_chats:r.chats.map(c=>({name:c.name,total:c.total})), roles:r.roles};
   return {...base, mode:"chat", chat:r.name, people:r.people.slice(0,6).map(p=>({name:p.name, messages:p.msgs, share_pct:Math.round(p.msgs/r.total*100), voice:p.voice, stickers:p.stickers, photos:p.photos, night_pct:p.msgs?Math.round(p.night/p.msgs*100):0, started_conversations:p.starts, median_reply_min:p.medianReply?Math.round(p.medianReply/60):null, longest_monologue:p.run, laughs:p.laugh||0, questions:p.q||0, replies_with_quote:p.rep2||0, edits:p.edits||0, avg_len:p.msgs?Math.round(p.chars/p.msgs):0}))};
 }
@@ -1505,7 +1518,7 @@ function recapPrompt(f){
 Пиши коротко: каждая строка до 140 символов. Интерпретируй цифры, говори, что они значат про людей. Не пересказывай число без смысла. Сравнение для книги каждый раз придумывай новое и неожиданное.
 Данные (JSON): ${JSON.stringify(f)}
 Верни только JSON без пояснений и без markdown:
-{"intro":"строка про общий объем","writers":"${ov?"":"строка про то, кто больше пишет"}","rhythm":"строка про ритм и самый жаркий день","timeTitle":"название для самого активного времени, 2-4 слова","timeLine":"строка про это время","book":"строка с неожиданным сравнением объема текста","words":"строка про слова года и фразу","emoji":"строка про эмодзи","verdict":"финальная фраза, до 60 символов"${ov?`,"roles":[{"t":"название роли","who":"имя из roles","d":"смешное пояснение с цифрой"}]`:`,"awards":[{"t":"номинация","who":"имя из people","d":"пояснение с цифрой"}]`}}
+{"intro":"строка про общий объем","writers":"${ov?"":"строка про то, кто больше пишет"}","rhythm":"строка про ритм и самый жаркий день","timeTitle":"название для самого активного времени, 2-4 слова","timeLine":"строка про это время","book":"строка с неожиданным сравнением объема текста в современных единицах: экраны, рилсы, посты, часы печати","words":"строка про слова года и фразу","emoji":"строка про эмодзи","verdict":"финальная фраза, до 60 символов"${ov?`,"roles":[{"t":"название роли","who":"имя из roles","d":"смешное пояснение с цифрой"}]`:`,"awards":[{"t":"номинация","who":"имя из people","d":"пояснение с цифрой"}]`}}
 ${ov?"Роли бери из данных roles, имена не меняй, перепиши только названия и пояснения смешнее.":"Номинаций 5, имена только из people."}`;
 }
 async function aiRecapTexts(r){
@@ -1586,7 +1599,19 @@ function awardIcon(t){ t=t.toLowerCase();
 }
 function timeArt(h){ const night=h<5||h>=22;
   return `<svg class="sart" viewBox="0 0 72 72" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">${night?'<path class="dr" pathLength="1" d="M44 12a24 24 0 100 48 20 20 0 010-48z"/><path class="dr" pathLength="1" d="M54 18l2 4 4 2-4 2-2 4-2-4-4-2 4-2z"/>':'<circle class="dr" pathLength="1" cx="36" cy="36" r="13"/><path class="dr" pathLength="1" d="M36 8v8M36 56v8M8 36h8M56 36h8M16 16l6 6M50 50l6 6M16 56l6-6M50 22l6-6"/>'}</svg>`; }
-function bookArt(){ return `<svg class="sart" viewBox="0 0 72 72" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path class="dr" pathLength="1" d="M36 20c-8-6-18-6-26-4v38c8-2 18-2 26 4 8-6 18-6 26-4V16c-8-2-18-2-26 4z"/><path class="dr" pathLength="1" d="M36 20v38M18 28h10M18 36h10M44 28h10M44 36h10"/></svg>`; }
+function bookArt(){ return `<svg class="sart" viewBox="0 0 72 72" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect class="dr" pathLength="1" x="22" y="8" width="28" height="56" rx="6"/><path class="dr" pathLength="1" d="M32 14h8M28 24h16M28 32h12M28 40h16M28 48h10M36 58h.01"/></svg>`; }
+</script>
+<script>
+/* ---------- share card helpers ---------- */
+function wrapLines(x,text,maxW){ const w=String(text).split(/\s+/), out=[]; let line=""; for(const word of w){ const t=line?line+" "+word:word; if(x.measureText(t).width>maxW&&line){ out.push(line); line=word; } else line=t; } if(line) out.push(line); return out; }
+function drawWrap(x,text,px,py,maxW,lh,maxLines){ let lines=wrapLines(x,text,maxW); if(lines.length>maxLines){ lines=lines.slice(0,maxLines); let l=lines[maxLines-1]; while(x.measureText(l+"…").width>maxW&&l.length) l=l.slice(0,-1); lines[maxLines-1]=l+"…"; } lines.forEach((l,i)=>x.fillText(l,px,py+i*lh)); return py+lines.length*lh; }
+function fitFont(x,text,maxW,start,min,make){ let fs=start; x.font=make(fs); while(x.measureText(text).width>maxW&&fs>min){ fs-=4; x.font=make(fs); } return fs; }
+function svgImg(svg,color){ return new Promise(res=>{ const im=new Image(); const src=svg.replace(/currentColor/g,color).replace(/class="[^"]*"/g,"").replace("<svg ",'<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" '); im.onload=()=>res(im); im.onerror=()=>res(null); im.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(src); }); }
+function weekly(chat,year){ const ms=chat.messages.filter(m=>m.type==="message"&&m.date&&(!year||m.date.startsWith(String(year)))); if(ms.length<3) return []; const t0=Date.parse(ms[0].date), wk={}; for(const m of ms){ const k=Math.floor((Date.parse(m.date)-t0)/604800000); wk[k]=(wk[k]||0)+1; } const n=Math.max(...Object.keys(wk).map(Number))+1; return Array.from({length:n},(_,i)=>wk[i]||0); }
+function drawWave(x,vals,px,py,w,h,color,accent){ if(vals.length<2) return; const mx=Math.max(...vals)||1, pts=vals.map((v,i)=>[px+i*w/(vals.length-1), py+h-(v/mx)*h]);
+  x.strokeStyle=color; x.lineWidth=5; x.lineCap="round"; x.beginPath(); x.moveTo(pts[0][0],pts[0][1]);
+  for(let i=0;i<pts.length-1;i++){ const p0=pts[i-1]||pts[i], p1=pts[i], p2=pts[i+1], p3=pts[i+2]||p2; x.bezierCurveTo(p1[0]+(p2[0]-p0[0])/6,p1[1]+(p2[1]-p0[1])/6,p2[0]-(p3[0]-p1[0])/6,p2[1]-(p3[1]-p1[1])/6,p2[0],p2[1]); } x.stroke();
+  const pi=vals.indexOf(mx), [bx,by]=pts[pi]; x.strokeStyle=accent; x.lineWidth=4; for(let k=0;k<10;k++){ const a=k*Math.PI/5, r1=12, r2=k%2?24:34; x.beginPath(); x.moveTo(bx+Math.cos(a)*r1,by+Math.sin(a)*r1); x.lineTo(bx+Math.cos(a)*r2,by+Math.sin(a)*r2); x.stroke(); } }
 </script>
 </body>
 </html>

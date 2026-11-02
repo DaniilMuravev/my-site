@@ -13,14 +13,14 @@ const agent = new https.Agent({ rejectUnauthorized: process.env.GIGACHAT_STRICT_
 let tokenCache = { token: null, exp: 0 };
 const hits = new Map(); // простой лимит: 10 запросов в минуту на IP
 
-function request(url, { method = "POST", headers = {}, body } = {}) {
+function request(url, { method = "POST", headers = {}, body, timeout = 25000 } = {}) {
   return new Promise((resolve, reject) => {
     const req = https.request(url, { method, headers, agent }, res => {
       const chunks = []; res.on("data", c => chunks.push(c));
       res.on("end", () => { const buf = Buffer.concat(chunks); resolve({ status: res.statusCode, text: buf.toString("utf8"), buf, type: res.headers["content-type"] || "" }); });
     });
     req.on("error", reject);
-    req.setTimeout(25000, () => req.destroy(new Error("timeout")));
+    req.setTimeout(timeout, () => req.destroy(new Error("timeout")));
     if (body) req.write(body);
     req.end();
   });
@@ -40,7 +40,7 @@ async function getToken() {
 }
 
 const MEMES = "«6-7» (сикс-севен), «Окак», «Можно, а зачем?», «тихо, спокойно, без суеты», «Сообщение не доставлено», Тралалело Тралала, Сахур, брейнрот, аура, база, кринж, имба, ризз, НПЦ, «вряд ли» (синица), «сидим с бобром за столом», POV, ред флаг, грин флаг, вайб, постирония в стиле «конь стоит под дождем. Почему»";
-const styleFor = (uncensored) => `Пиши по-русски, разговорно и смешно, как стендап-комик из интернета 2026 года. Используй свежие мемы уместно, не больше одного-двух в строке: ${MEMES}. Каждая шутка опирается на конкретную цифру и интерпретирует ее: что это говорит о людях, а не просто повторяет число. ${uncensored ? "Можно мат, умеренно и смешно, как в дружеском чате, например «вот такая хуйня, собачка». Без оскорблений людей по признакам." : "Без мата."} Без политики, тем внешности и личной жизни. Не используй букву ё. Без длинных тире.`;
+const styleFor = (uncensored) => `Пиши по-русски, разговорно и смешно, как стендап-комик из интернета 2026 года. Используй свежие мемы уместно, не больше одного-двух в строке: ${MEMES}. Каждая шутка опирается на конкретную цифру и интерпретирует ее: что это говорит о людях, а не просто повторяет число. ${uncensored ? "Можно мат, умеренно и смешно, как в дружеском чате, например «вот такая хуйня, собачка». Без оскорблений людей по признакам." : "Без мата."} Без политики, тем внешности и личной жизни. Не используй букву ё. Без длинных тире. Внутри текстовых значений никогда не используй двойные кавычки, только «елочки».`;
 
 function buildPrompt(kind, data) {
   const STYLE = styleFor(!!data.uncensored);
@@ -63,7 +63,7 @@ ${data.facts && data.facts.post_snippets ? "В post_roasts разбери 3 ра
 Пиши коротко: каждая строка до 140 символов. Интерпретируй цифры, говори, что они значат про людей. Не пересказывай число без смысла. Сравнение для книги каждый раз придумывай новое и неожиданное.
 Данные (JSON): ${JSON.stringify(f).slice(0, 7000)}
 Верни только JSON без пояснений и без markdown:
-{"intro":"строка про общий объем",${ov ? "" : '"writers":"строка про то, кто больше пишет",'}"rhythm":"строка про ритм и самый жаркий день","timeTitle":"название для самого активного времени, 2-4 слова","timeLine":"строка про это время","book":"строка с неожиданным сравнением объема текста","words":"строка про слова года и фразу","emoji":"строка про эмодзи","age":"строка про возраст чата","verdict":"финальная фраза, до 60 символов",${ov ? '"roles":[{"t":"название роли","who":"имя из roles","d":"смешное пояснение с цифрой"}]' : '"awards":[{"t":"номинация","who":"имя из people","d":"пояснение с цифрой"}]'}}
+{"intro":"строка про общий объем",${ov ? "" : '"writers":"строка про то, кто больше пишет",'}"rhythm":"строка про ритм и самый жаркий день","timeTitle":"название для самого активного времени, 2-4 слова","timeLine":"строка про это время","book":"строка с неожиданным сравнением объема текста в современных единицах: экраны телефона, рилсы, посты, часы печати","words":"строка про слова года и фразу","emoji":"строка про эмодзи","age":"строка про возраст чата","verdict":"финальная фраза, до 60 символов",${ov ? '"roles":[{"t":"название роли","who":"имя из roles","d":"смешное пояснение с цифрой"}]' : '"awards":[{"t":"номинация","who":"имя из people","d":"пояснение с цифрой"}]'}}
 ${ov ? "Роли бери из данных roles, имена не меняй, перепиши только названия и пояснения смешнее." : "Номинаций 5, имена только из people."}`;
   }
   if (kind === "nominations") {
@@ -74,10 +74,27 @@ ${ov ? "Роли бери из данных roles, имена не меняй, �
   return null;
 }
 
+function repairJson(t) {
+  t = t.replace(/```json|```/g, "").replace(/[“”„]/g, '"').trim();
+  t = t.slice(t.indexOf("{"), t.lastIndexOf("}") + 1);
+  let out = "", inStr = false;
+  for (let i = 0; i < t.length; i++) {
+    const c = t[i];
+    if (c === "\\") { out += c + (t[i + 1] || ""); i++; continue; }
+    if (c === '"') {
+      if (!inStr) { inStr = true; out += c; continue; }
+      const rest = t.slice(i + 1).match(/^\s*(.)/);
+      if (!rest || /[,:}\]]/.test(rest[1])) { inStr = false; out += c; } else out += '\\"';
+      continue;
+    }
+    if (inStr && (c === "\n" || c === "\r")) { out += " "; continue; }
+    out += c;
+  }
+  return out.replace(/,\s*([}\]])/g, "$1");
+}
 function parseJson(text) {
-  const clean = text.replace(/```json|```/g, "").trim();
-  const start = clean.indexOf("{"), end = clean.lastIndexOf("}");
-  return JSON.parse(clean.slice(start, end + 1));
+  try { const c = text.replace(/```json|```/g, "").trim(); return JSON.parse(c.slice(c.indexOf("{"), c.lastIndexOf("}") + 1)); }
+  catch (e) { return JSON.parse(repairJson(text)); }
 }
 
 const API_BASE = API_URL.replace(/\/chat\/completions$/, "");
@@ -90,12 +107,13 @@ async function generateImage(data, token) {
   const r = await request(API_URL, {
     headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: "Bearer " + token },
     body: JSON.stringify({ model: MODEL, function_call: "auto", messages: [{ role: "system", content: "Ты художник-иллюстратор" }, { role: "user", content: imagePrompt(data) }] }),
+    timeout: 50000,
   });
   if (r.status !== 200) return { error: "image_unavailable", detail: r.status };
   const content = JSON.parse(r.text).choices?.[0]?.message?.content || "";
   const m = content.match(/<img[^>]+src="([^"]+)"/);
   if (!m) return { error: "image_unavailable", detail: "no image in answer" };
-  const f = await request(`${API_BASE}/files/${m[1]}/content`, { method: "GET", headers: { Accept: "application/jpg", Authorization: "Bearer " + token } });
+  const f = await request(`${API_BASE}/files/${m[1]}/content`, { method: "GET", headers: { Accept: "application/jpg", Authorization: "Bearer " + token }, timeout: 8000 });
   if (f.status !== 200) return { error: "image_unavailable", detail: "file " + f.status };
   return { image: "data:image/jpeg;base64," + f.buf.toString("base64") };
 }
@@ -130,12 +148,19 @@ export default async function handler(req, res) {
     const token = await getToken();
     const r = await request(API_URL, {
       headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: "Bearer " + token },
-      body: JSON.stringify({ model: MODEL, temperature: 1.0, max_tokens: 1400, messages: [{ role: "user", content: prompt }] }),
+      body: JSON.stringify({ model: MODEL, temperature: 0.85, max_tokens: 1400, messages: [{ role: "user", content: prompt }] }),
+      timeout: 45000,
     });
     if (r.status === 429) return res.status(429).json({ error: "gigachat busy" });
     if (r.status !== 200) return res.status(502).json({ error: "gigachat " + r.status });
     const content = JSON.parse(r.text).choices?.[0]?.message?.content || "";
-    return res.status(200).json(parseJson(content));
+    try { return res.status(200).json(parseJson(content)); }
+    catch (e) {
+      const r2 = await request(API_URL, { headers: { "Content-Type": "application/json", Accept: "application/json", Authorization: "Bearer " + token },
+        body: JSON.stringify({ model: MODEL, temperature: 0.2, max_tokens: 1400, messages: [{ role: "user", content: "Исправь JSON, чтобы он был валидным. Внутри строк замени двойные кавычки на «». Верни только JSON:\n" + content }] }) });
+      const c2 = JSON.parse(r2.text).choices?.[0]?.message?.content || "";
+      return res.status(200).json(parseJson(c2));
+    }
   } catch (e) {
     return res.status(500).json({ error: String(e.message || e).slice(0, 200) });
   }
