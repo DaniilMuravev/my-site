@@ -306,12 +306,12 @@ function renderHero(dir){const l=LOOKS[LI],L=LOOKIMG[l.img];const keys=ORDER.fil
  stage.addEventListener('pointerup',end);stage.addEventListener('pointercancel',()=>{x0=null;gsap.to(fig,{x:0,rotation:0,duration:.3});});
  if(matchMedia('(hover:hover)').matches&&L.angle){stage.addEventListener('pointermove',e=>{if(e.pointerType!=='mouse'||x0!=null)return;const r=fig.getBoundingClientRect();const want=e.clientX>r.right-r.width*.25;if(want!==fig.classList.contains('turned'))turn(want);});stage.addEventListener('pointerleave',()=>{if(fig.classList.contains('turned'))turn(false);});}
  setupSwing(rail,'.pc .sw',16);
- if(dir&&!RM){gsap.fromTo(fig,{x:dir*90,opacity:0},{x:0,opacity:1,duration:.55,ease:'power3.out'});gsap.from(rail.querySelectorAll('.pc .sw'),{y:-50,opacity:0,duration:.55,stagger:.07,ease:'back.out(1.7)',clearProps:'transform,opacity',onComplete:()=>kickRail(26)});}}
+ if(dir&&!RM){gsap.fromTo(fig,{x:dir*90,opacity:0,filter:'blur(6px)'},{x:0,opacity:1,filter:'blur(0px)',duration:.32,ease:'back.out(1.4)',clearProps:'filter'});gsap.from(rail.querySelectorAll('.pc .sw'),{y:-40,opacity:0,duration:.3,stagger:.035,ease:'back.out(1.7)',clearProps:'transform,opacity',onComplete:()=>kickRail(26)});}}
 let BUSY=false;
 function goLook(i,dir){if(BUSY)return;BUSY=true;const fig=$('#fig'),pcs=document.querySelectorAll('#mrail .pc .sw');
  if(RM){LI=i;renderHero();BUSY=false;return;}
- gsap.to(pcs,{y:60,opacity:0,duration:.28,stagger:.04,ease:'power2.in'});
- gsap.to(fig,{x:-dir*90,opacity:0,rotation:-dir*1.5,duration:.32,ease:'power2.in',onComplete:()=>{LI=i;renderHero(dir);BUSY=false;}});}
+ gsap.to(pcs,{y:40,opacity:0,duration:.14,stagger:.02,ease:'power2.in'});
+ gsap.to(fig,{x:-dir*90,opacity:0,rotation:-dir*1.5,filter:'blur(6px)',duration:.16,ease:'power2.in',onComplete:()=>{LI=i;renderHero(dir);BUSY=false;}});}
 function turn(to){const fig=$('#fig');if(!fig||!fig.querySelector('.ang'))return;const want=to===undefined?!fig.classList.contains('turned'):to;gsap.timeline().to(fig,{scaleX:.86,duration:.15,ease:'power2.in',onComplete:()=>fig.classList.toggle('turned',want)}).to(fig,{scaleX:1,duration:.3,ease:'back.out(2)'});}
 function focusPiece(k,soft){document.querySelectorAll('#hero .hot').forEach(h=>h.classList.toggle('on',h.dataset.k===k));document.querySelectorAll('#mrail .pc').forEach(pc=>pc.classList.toggle('dim',!!k&&pc.dataset.k!==k));if(k&&!soft){const pc=document.querySelector(`#mrail .pc[data-k="${k}"]`);if(pc){const r=$('#mrail');r.scrollTo({left:pc.offsetLeft-16,behavior:RM?'auto':'smooth'});const o=SW.find(x=>x.el===pc.querySelector('.sw'));if(o)o.av+=60;}clearTimeout(focusPiece.t);focusPiece.t=setTimeout(()=>focusPiece(null),1600);}}
 
@@ -434,7 +434,7 @@ const go=()=>{if(go.d)return;go.d=1;boot();};
 if(document.fonts&&document.fonts.load)Promise.race([document.fonts.load('600 20px Geist'),new Promise(r=>setTimeout(r,1200))]).then(go,go);else go();
 })();
 </script>
-<a id="dm-back" href="/" style="position:fixed;left:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));z-index:99999;display:inline-flex;align-items:center;gap:8px;padding:14px 20px;border-radius:999px;background:#0B0B0C;color:#fff;font:600 15px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,.35)">← Портфолио Даниила</a>
+<a id="dm-back" href="/" style="position:fixed;right:12px;top:calc(56px + env(safe-area-inset-top,0px));z-index:99999;display:inline-flex;align-items:center;gap:6px;padding:8px 12px;border-radius:999px;background:rgba(11,11,12,.82);color:#fff;font:500 13px/1 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,.35)">← Портфолио</a>
 <script>(function(){var a=document.getElementById("dm-back");if(!location.pathname.startsWith("/solutions"))a.href="https://madme-five.vercel.app/";})();</script>
 </body>
 </html>
