@@ -25,7 +25,7 @@ html,body{margin:0;background:var(--paper);color:var(--ink);font-family:"Geologi
 </head>
 <body>
 <header class="top"><a href="/">← Даниил Муравьев</a><span>Дизайн-работы</span></header>
-<div class="tunnel"><div class="stage" id="stage"><p class="end" id="end">Больше в <a href="https://madcorp.framer.website/" target="_blank" rel="noopener">старом портфолио ↗</a></p></div></div>
+<div class="tunnel"><div class="stage" id="stage"></div></div>
 <script>
 const IMG=[
  ["https://framerusercontent.com/images/L2AlJ6jzOusF5w5K33suF0TcMs.png","Сайт врача"],
@@ -48,7 +48,7 @@ function upd(){ const max=document.body.scrollHeight-innerHeight, p=max>0? scrol
   cards.forEach((c,i)=>{ const z=cam - i*GAP; const [px,py]=POS[i%POS.length];
     const op = z>500? Math.max(0,1-(z-500)/300) : z<-3200? 0 : Math.min(1,(z+3200)/1200);
     c.style.transform=`translate(-50%,-50%) translate3d(${px*innerWidth}px,${py*innerHeight}px,${z}px)`; c.style.opacity=op.toFixed(3); c.style.zIndex=String(1000+Math.round(z)); });
-  document.getElementById("end").style.opacity = p>.96? 1 : 0; }
+  }
 if(!matchMedia("(prefers-reduced-motion: reduce)").matches){ addEventListener("scroll",()=>requestAnimationFrame(upd),{passive:true}); addEventListener("resize",upd); upd(); }
 </script>
 </body>
