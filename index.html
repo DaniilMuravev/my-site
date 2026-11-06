@@ -630,6 +630,38 @@ body.paper:not(.dark) .mov{--mc:#E6E3DC;--mi:#161514}
 .inl img{height:13px;width:auto;vertical-align:-1px;margin-right:4px;transition:filter .2s}
 .inl:hover{transform:translateY(-2px);color:#C9A86A;border-color:#C9A86A}
 body.paper:not(.dark) .inl:hover{color:#8A6A2F;border-color:#8A6A2F}
+
+.mo .ag-doc,.mo .ag-dots,.mo .ag-a,.mo .ag-src,.mo .ag-cur,.mo .wa-new,.mo .wa-menu,.mo .wa-cur{opacity:0}
+.mo .ag-a,.mo .ag-src{opacity:1}.mo .ag-q{opacity:1}
+body.paper .btn{border:1px solid var(--line)}
+@media (prefers-reduced-motion:no-preference){
+ .mo .ag-a,.mo .ag-src,.mo .ag-q{opacity:0}
+ .mo .ag-app{animation:agApp 10s infinite both} @keyframes agApp{0%,62%{opacity:1}66%,96%{opacity:0}100%{opacity:1}}
+ .mo .ag-doc{animation:agDoc 10s infinite both} @keyframes agDoc{0%,63%{opacity:0;transform:translateX(-10px)}67%,96%{opacity:1;transform:none}100%{opacity:0}}
+ .mo .ag-hl{transform-box:fill-box;transform-origin:left;animation:agHl 10s infinite both} @keyframes agHl{0%,68%{transform:scaleX(0)}74%,96%{transform:scaleX(1)}100%{transform:scaleX(0)}}
+ .mo .ag-q{animation:agQ 10s infinite both} @keyframes agQ{0%,3%{opacity:0;transform:translateY(10px)}7%,96%{opacity:1;transform:none}100%{opacity:0}}
+ .mo .ag-dots{animation:agD 10s infinite both} @keyframes agD{0%,10%{opacity:0}13%,24%{opacity:1}27%,100%{opacity:0}}
+ .mo .ag-dots circle{transform-box:fill-box;transform-origin:center;animation:dotB .9s infinite ease-in-out} .mo .ag-dots .d2{animation-delay:.15s}.mo .ag-dots .d3{animation-delay:.3s}
+ @keyframes dotB{0%,100%{transform:none;opacity:.5}50%{transform:translateY(-3px);opacity:1}}
+ .mo .ag-a{animation:agA 10s infinite both} @keyframes agA{0%,26%{opacity:0;transform:scale(.97)}29%,96%{opacity:1;transform:none}100%{opacity:0}}
+ .mo .ag-l1{animation:agL1 10s infinite both} @keyframes agL1{0%,28%{opacity:0}32%,100%{opacity:1}}
+ .mo .ag-l2{animation:agL2 10s infinite both} @keyframes agL2{0%,32%{opacity:0}36%,100%{opacity:1}}
+ .mo .ag-l3{animation:agL3 10s infinite both} @keyframes agL3{0%,36%{opacity:0}40%,100%{opacity:1}}
+ .mo .ag-src{animation:agS 10s infinite both} @keyframes agS{0%,43%{opacity:0;transform:translateY(8px)}47%,96%{opacity:1;transform:none}100%{opacity:0}}
+ .mo .ag-s1{transform-box:fill-box;transform-origin:center;animation:agS1 10s infinite both} @keyframes agS1{0%,60%{transform:none}62%{transform:scale(.95)}64%,100%{transform:none}}
+ .mo .ag-cur{animation:agC 10s infinite both} @keyframes agC{0%,50%{opacity:0}53%,94%{opacity:1}97%,100%{opacity:0}}
+ .mo .ag-cur-in{animation:agCi 10s infinite both} @keyframes agCi{0%,53%{transform:none}60%,100%{transform:translate(-40px,-62px)}}
+ .mo .wa-sel{transform-box:fill-box;transform-origin:left;animation:waSel 10s infinite both} @keyframes waSel{0%,10%{transform:scaleX(0);opacity:.12}26%,48%{transform:scaleX(1);opacity:.12}52%,100%{transform:scaleX(1);opacity:0}}
+ .mo .wa-old{animation:waOld 10s infinite both} @keyframes waOld{0%,48%{opacity:1}52%,96%{opacity:0}100%{opacity:1}}
+ .mo .wa-new{animation:waNew 10s infinite both} @keyframes waNew{0%,50%{opacity:0}52%,94%{opacity:1}98%,100%{opacity:0}}
+ .mo .wl{transform-box:fill-box;transform-origin:left} .mo .wl0{animation:wl0 10s infinite both}.mo .wl1{animation:wl1 10s infinite both}.mo .wl2{animation:wl2 10s infinite both}
+ @keyframes wl0{0%,52%{transform:scaleX(0)}56%,100%{transform:scaleX(1)}} @keyframes wl1{0%,55%{transform:scaleX(0)}59%,100%{transform:scaleX(1)}} @keyframes wl2{0%,58%{transform:scaleX(0)}62%,100%{transform:scaleX(1)}}
+ .mo .wa-acc{animation:waAcc 10s infinite both} @keyframes waAcc{0%,64%{opacity:0;transform:translateY(6px)}67%,81%{opacity:1;transform:none}84%,100%{opacity:0}}
+ .mo .wa-menu{transform-box:fill-box;transform-origin:top left;animation:waMenu 10s infinite both} @keyframes waMenu{0%,28%{opacity:0;transform:scale(.95)}31%,45%{opacity:1;transform:none}48%,100%{opacity:0}}
+ .mo .wa-pick{animation:waPick 10s infinite both} @keyframes waPick{0%,40%{opacity:0}42%,46%{opacity:.12}48%,100%{opacity:0}}
+ .mo .wa-cur{animation:waC 10s infinite both} @keyframes waC{0%,4%{opacity:0}8%,86%{opacity:1}90%,100%{opacity:0}}
+ .mo .wa-cur-in{animation:waCi 10s infinite both} @keyframes waCi{0%,8%{transform:translate(-374px,-150px)}26%{transform:translate(30px,-110px)}36%{transform:translate(30px,-110px)}42%,46%{transform:translate(-90px,-72px)}68%{transform:translate(-90px,-72px)}76%,100%{transform:translate(-339px,-92px)}}
+}
 </style>
 </head>
 <body>
@@ -659,8 +691,68 @@ body.paper:not(.dark) .inl:hover{color:#8A6A2F;border-color:#8A6A2F}
       <p class="aboutp">Начинал с фронтенда и дизайна, поэтому вижу продукт целиком: как он выглядит, как устроен в коде и зачем он бизнесу. Последние два года веду фичи от исследования и PRD до релиза и метрик</p>
     </section>
 
+    <section class="blk" id="ai">
+      <h2 class="lbl">AI-фичи в ClickHelp</h2>
+      <article class="pj">
+        <div class="pjh"><span class="ic"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h22v14H14l-6 5v-5H5z"/><path d="M16 10l1.2 3 3 1.2-3 1.2-1.2 3-1.2-3-3-1.2 3-1.2z"/></svg></span><b>AnswerGenius</b><span class="yr">ClickHelp</span></div>
+        <div class="pjb">
+          <div class="mov mo-ag"><svg class="mo" viewBox="0 0 640 400" aria-label="AnswerGenius: бот в приложении отвечает по базе знаний и показывает источник">
+  <rect width="640" height="400" fill="var(--mc)"/><defs><clipPath id="agClip"><rect x="60" y="28" width="520" height="344" rx="14"/></clipPath></defs>
+  <g clip-path="url(#agClip)"><rect x="60" y="28" width="520" height="344" fill="#F7F7F7"/><rect x="60" y="28" width="520" height="26" fill="#EDEDED"/><circle cx="76" cy="41" r="3.5" fill="#C9C9C9"/><circle cx="88" cy="41" r="3.5" fill="#C9C9C9"/><circle cx="100" cy="41" r="3.5" fill="#C9C9C9"/>
+<g class="ag-app"><rect x="76" y="66" width="70" height="294" rx="8" fill="#EDEDED"/><rect x="86" y="82" width="50" height="7" rx="3.5" fill="#D6D6D6"/><rect x="86" y="104" width="40" height="7" rx="3.5" fill="#D6D6D6"/><rect x="86" y="126" width="50" height="7" rx="3.5" fill="#D6D6D6"/><rect x="86" y="148" width="40" height="7" rx="3.5" fill="#D6D6D6"/><rect x="86" y="170" width="50" height="7" rx="3.5" fill="#D6D6D6"/><rect x="86" y="192" width="40" height="7" rx="3.5" fill="#D6D6D6"/><rect x="86" y="214" width="50" height="7" rx="3.5" fill="#D6D6D6"/><rect x="86" y="236" width="40" height="7" rx="3.5" fill="#D6D6D6"/>
+ <rect x="160" y="66" width="220" height="22" rx="6" fill="#E6E6E6"/><rect x="160" y="104" width="220" height="30" rx="6" fill="#EFEFEF"/><rect x="160" y="144" width="220" height="30" rx="6" fill="#EFEFEF"/><rect x="160" y="184" width="220" height="30" rx="6" fill="#EFEFEF"/><rect x="160" y="224" width="220" height="30" rx="6" fill="#EFEFEF"/><rect x="160" y="264" width="220" height="30" rx="6" fill="#EFEFEF"/><rect x="160" y="304" width="220" height="30" rx="6" fill="#EFEFEF"/></g>
+<g class="ag-doc"><rect x="76" y="66" width="304" height="294" fill="#F7F7F7"/><text x="92" y="92" fill="#8A8A8A" font-family="Geologica, system-ui" font-size="10">База знаний · Безопасность</text><text x="92" y="116" fill="#111" font-family="Geologica, system-ui" font-size="16" font-weight="600">Настройка SSO</text>
+ <rect x="92" y="134" width="270" height="6" rx="3" fill="#D6D6D6"/><rect x="92" y="150" width="250" height="6" rx="3" fill="#D6D6D6"/><rect x="92" y="166" width="262" height="6" rx="3" fill="#D6D6D6"/><rect x="92" y="182" width="200" height="6" rx="3" fill="#D6D6D6"/>
+ <rect class="ag-hl" x="86" y="200" width="284" height="44" rx="6" fill="#111" opacity=".08"/><rect x="92" y="208" width="260" height="6" rx="3" fill="#111" opacity=".75"/><rect x="92" y="222" width="240" height="6" rx="3" fill="#111" opacity=".75"/>
+ <rect x="92" y="260" width="250" height="6" rx="3" fill="#D6D6D6"/><rect x="92" y="276" width="268" height="6" rx="3" fill="#D6D6D6"/><rect x="92" y="292" width="180" height="6" rx="3" fill="#D6D6D6"/></g>
+<rect x="392" y="54" width="188" height="318" fill="#FFFFFF"/><path d="M392 54v318" stroke="#E3E3E3"/>
+<g transform="translate(404 66)"><circle cx="9" cy="9" r="9" fill="#111"/><path d="M5 9h8M9 5v8" stroke="#fff" stroke-width="1.6" stroke-linecap="round" transform="rotate(45 9 9)"/></g><text x="430" y="79" fill="#111" font-family="Geologica, system-ui" font-size="12" font-weight="600">AnswerGenius</text>
+<g class="ag-q"><rect x="424" y="104" width="144" height="30" rx="15" fill="#111"/><text x="438" y="123" fill="#F7F7F7" font-family="Geologica, system-ui" font-size="11">Как включить SSO?</text></g>
+<g class="ag-dots"><rect x="404" y="148" width="54" height="24" rx="12" fill="#EDEDED"/><circle class="d1" cx="418" cy="160" r="3" fill="#8A8A8A"/><circle class="d2" cx="431" cy="160" r="3" fill="#8A8A8A"/><circle class="d3" cx="444" cy="160" r="3" fill="#8A8A8A"/></g>
+<g class="ag-a"><rect x="404" y="148" width="164" height="84" rx="12" fill="#EDEDED"/>
+ <text x="416" y="168" fill="#111" font-family="Geologica, system-ui" font-size="10.5"><tspan class="ag-l1">Откройте Settings →</tspan></text>
+ <text x="416" y="184" fill="#111" font-family="Geologica, system-ui" font-size="10.5"><tspan class="ag-l2">Security и включите SSO.</tspan></text>
+ <text x="416" y="200" fill="#111" font-family="Geologica, system-ui" font-size="10.5"><tspan class="ag-l3">Нужна роль Admin.</tspan></text>
+ <text x="416" y="220" fill="#8A8A8A" font-family="Geologica, system-ui" font-size="9.5" class="ag-l3">Ответ по вашей базе знаний</text></g>
+<g class="ag-src"><text x="404" y="252" fill="#8A8A8A" font-family="Geologica, system-ui" font-size="9.5">Источники</text>
+ <g class="ag-s1"><rect x="404" y="260" width="164" height="28" rx="8" fill="#F7F7F7" stroke="#E3E3E3"/><g transform="translate(414 267)"><path d="M0 0h8l3 3v11H0z" fill="none" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/><path d="M2.5 7h6M2.5 10h4" stroke="#111" stroke-width="1.2" stroke-linecap="round"/></g><text x="434" y="278" fill="#111" font-family="Geologica, system-ui" font-size="10.5">Настройка SSO</text></g>
+ <g class="ag-s2"><rect x="404" y="294" width="164" height="28" rx="8" fill="#F7F7F7" stroke="#E3E3E3"/><g transform="translate(414 301)"><path d="M0 0h8l3 3v11H0z" fill="none" stroke="#111" stroke-width="1.3" stroke-linejoin="round"/><path d="M2.5 7h6M2.5 10h4" stroke="#111" stroke-width="1.2" stroke-linecap="round"/></g><text x="434" y="312" fill="#111" font-family="Geologica, system-ui" font-size="10.5">Роли и права</text></g></g>
+<g class="ag-cur" transform="translate(500 340)"><g class="ag-cur-in"><path d="M0 0l0 16 4-4 3 7 3-1-3-7h6z" fill="#111" stroke="#F7F7F7" stroke-width="1.2" stroke-linejoin="round"/></g></g></g></svg></div>
+          <p>Чат-бот в документации и прямо в приложении клиента. Отвечает по базе знаний компании, а не из интернета, и показывает источник: можно открыть статью, откуда взят ответ</p>
+          <dl class="facts2"><div><dt>Роль</dt><dd>Идея, PRD, запуск с R&amp;D</dd></div><div><dt>Результат</dt><dd>Около 37% порталов возвращаются через месяц</dd></div></dl>
+          <a class="btn" href="https://clickhelp.com/lp/answer-genius-in-app-widget/" target="_blank" rel="noopener">Посмотреть на сайте ↗</a>
+        </div>
+      </article>
+      <article class="pj">
+        <div class="pjh"><span class="ic"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 26l3-9 13-13 6 6-13 13z"/><path d="M19 7l6 6"/><path d="M24 20l1 2.5 2.5 1-2.5 1-1 2.5-1-2.5-2.5-1 2.5-1z"/></svg></span><b>WriteAssist</b><span class="yr">ClickHelp</span></div>
+        <div class="pjb">
+          <div class="mov mo-wa"><svg class="mo" viewBox="0 0 640 400" aria-label="WriteAssist: выделяешь текст в топике, AI улучшает его в один клик">
+  <rect width="640" height="400" fill="var(--mc)"/><defs><clipPath id="waClip"><rect x="60" y="28" width="520" height="344" rx="14"/></clipPath></defs>
+  <g clip-path="url(#waClip)"><rect x="60" y="28" width="520" height="344" fill="#F7F7F7"/><rect x="60" y="28" width="520" height="26" fill="#EDEDED"/><circle cx="76" cy="41" r="3.5" fill="#C9C9C9"/><circle cx="88" cy="41" r="3.5" fill="#C9C9C9"/><circle cx="100" cy="41" r="3.5" fill="#C9C9C9"/>
+<rect x="60" y="54" width="520" height="30" fill="#FFFFFF"/><path d="M60 84h520" stroke="#E3E3E3"/>
+<g font-family="Geologica, system-ui" font-size="12" fill="#111"><text x="78" y="74" font-weight="700">B</text><text x="96" y="74" font-style="italic">I</text><text x="110" y="74" text-decoration="underline">U</text></g>
+<g class="wa-btn"><rect x="480" y="59" width="88" height="20" rx="10" fill="#111"/><path d="M494 63l1.6 4.4 4.4 1.6-4.4 1.6-1.6 4.4-1.6-4.4-4.4-1.6 4.4-1.6z" fill="#F7F7F7"/><text x="530" y="73" text-anchor="middle" fill="#F7F7F7" font-family="Geologica, system-ui" font-size="10.5">Ask AI</text></g>
+<text x="92" y="118" fill="#111" font-family="Geologica, system-ui" font-size="18" font-weight="600">Настройка SSO</text>
+<g class="wa-old"><rect x="92" y="140" width="380" height="7" rx="3.5" fill="#BDBDBD"/><rect x="92" y="156" width="330" height="7" rx="3.5" fill="#BDBDBD"/><rect x="92" y="172" width="400" height="7" rx="3.5" fill="#BDBDBD"/><rect x="92" y="188" width="260" height="7" rx="3.5" fill="#BDBDBD"/>
+ <g transform="translate(0 0)"><rect class="wa-sel" x="88" y="134" width="420" height="68" rx="4" fill="#111" opacity=".1"/></g>
+ <g class="wa-err"><path d="M150 150q4 3 8 0t8 0 8 0" stroke="#111" stroke-width="1.2" fill="none"/><path d="M300 166q4 3 8 0t8 0 8 0" stroke="#111" stroke-width="1.2" fill="none"/></g></g>
+<g class="wa-new"><rect class="wl wl0" x="92" y="140" width="400" height="7" rx="3.5" fill="#111"/><rect class="wl wl1" x="92" y="156" width="360" height="7" rx="3.5" fill="#111"/><rect class="wl wl2" x="92" y="172" width="300" height="7" rx="3.5" fill="#111"/>
+ <g class="wa-acc"><rect x="92" y="196" width="78" height="24" rx="12" fill="#111"/><text x="131" y="212" text-anchor="middle" fill="#F7F7F7" font-family="Geologica, system-ui" font-size="10.5">Принять</text><rect x="178" y="196" width="78" height="24" rx="12" fill="none" stroke="#BDBDBD"/><text x="217" y="212" text-anchor="middle" fill="#111" font-family="Geologica, system-ui" font-size="10.5">Отменить</text></g></g>
+<g opacity=".6"><rect x="92" y="246" width="390" height="7" rx="3.5" fill="#D6D6D6"/><rect x="92" y="262" width="350" height="7" rx="3.5" fill="#D6D6D6"/><rect x="92" y="278" width="410" height="7" rx="3.5" fill="#D6D6D6"/><rect x="92" y="294" width="280" height="7" rx="3.5" fill="#D6D6D6"/><rect x="92" y="310" width="330" height="7" rx="3.5" fill="#D6D6D6"/></g>
+<g class="wa-menu"><rect x="300" y="208" width="190" height="132" rx="12" fill="#FFFFFF" stroke="#E3E3E3"/>
+ <rect class="wa-pick" x="306" y="216" width="178" height="26" rx="8" fill="#111" opacity=".08"/>
+ <g font-family="Geologica, system-ui" font-size="11" fill="#111"><text x="318" y="233">Улучшить текст</text><text x="318" y="259">Исправить ошибки</text><text x="318" y="285">Сделать короче</text><text x="318" y="311">Сделать дружелюбнее</text></g>
+ <text x="318" y="332" fill="#8A8A8A" font-family="Geologica, system-ui" font-size="9">учитывает соседние топики</text></g>
+<g class="wa-cur" transform="translate(470 300)"><g class="wa-cur-in"><path d="M0 0l0 16 4-4 3 7 3-1-3-7h6z" fill="#111" stroke="#F7F7F7" stroke-width="1.2" stroke-linejoin="round"/></g></g></g></svg></div>
+          <p>AI-помощник в редакторе топиков. Пишет новый топик с нуля или улучшает выделенный текст: исправляет ошибки, сокращает, меняет тон. Учитывает соседние топики, поэтому текст не выбивается из документации</p>
+          <dl class="facts2"><div><dt>Роль</dt><dd>Идея, PRD, запуск с R&amp;D</dd></div><div><dt>Результат</dt><dd>Около 37% авторов возвращаются через месяц</dd></div></dl>
+          <a class="btn" href="https://docs.clickhelp.com/articles/clickhelp-user-manual/writeassist-ai-writing-assistant" target="_blank" rel="noopener">Как это работает ↗</a>
+        </div>
+      </article>
+    </section>
+
     <section class="blk" id="apps">
-      <h2 class="lbl">Проекты</h2>
+      <h2 class="lbl">Свои проекты</h2>
       <article class="pj">
         <div class="pjh"><span class="ic"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="15" cy="18" r="9"/><path d="M6 15a9 9 0 0118 0z" fill="currentColor"/><path d="M24 15h5"/><circle cx="18" cy="19" r="1.3" fill="currentColor" stroke="none"/><path d="M12 22c2 1.6 4 1.6 6 0"/></svg></span><b>Рекап</b><span class="yr">2026</span></div>
         <div class="pjb">
